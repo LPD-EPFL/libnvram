@@ -1,33 +1,33 @@
 #include "FlushBuffer_one_cl.h"
 #include <stdio.h>
-flushbuffer_t* buffer_create() {
+linkcache_t* cache_create() {
 	int i;
 
-	flushbuffer_t* new_buffer = (flushbuffer_t*)_aligned_malloc(sizeof(flushbuffer_t), CACHE_LINE_SIZE);
+	linkcache_t* new_cache = (linkcache_t*)_aligned_malloc(sizeof(linkcache_t), CACHE_LINE_SIZE);
 
 	for (i = 0; i < NUM_BUCKETS; i++) {
-		new_buffer->buckets[i] = (bucket_t*)_aligned_malloc(sizeof(bucket_t), CACHE_LINE_SIZE);
-		new_buffer->buckets[i]->header.all = 0;
+		new_cache->buckets[i] = (bucket_t*)_aligned_malloc(sizeof(bucket_t), CACHE_LINE_SIZE);
+		new_cache->buckets[i]->header.all = 0;
 	}
 
 	MemoryBarrier();
-	return new_buffer;
+	return new_cache;
 }
 
-void buffer_destroy(flushbuffer_t* buffer) {
+void cache_destroy(linkcache_t* cache) {
 	int i;
 
 	for (i = 0; i < NUM_BUCKETS; i++) {
-		_aligned_free(buffer->buckets[i]);
+		_aligned_free(cache->buckets[i]);
 	}
-	_aligned_free(buffer);
+	_aligned_free(cache);
 }
 
 
 /*
 	make sure everything is flushed
 */
-void buffer_flush_all_buckets(flushbuffer_t* buffer) {
+void cache_wb_all_buckets(linkcache_t* cache) {
 	//fprintf(stderr, "flushing all\n");
 	// is there a cheaper way of doing this?
 	int i;
@@ -39,7 +39,7 @@ void buffer_flush_all_buckets(flushbuffer_t* buffer) {
 	while (total_flushed < NUM_BUCKETS) {
 		for (i = 0; i < NUM_BUCKETS; i++) {
 			if (flushed[i] == 0) {
-				if (bucket_flush(buffer, i)) {
+				if (bucket_wb(cache, i)) {
 					flushed[i] = 1;
 					total_flushed++;
 				}
@@ -49,19 +49,19 @@ void buffer_flush_all_buckets(flushbuffer_t* buffer) {
 	}
 }
 
-int bucket_flush(flushbuffer_t* buffer, int bucket_num) {
+int bucket_wb(linkcache_t* cache, int bucket_num) {
 	//fprintf(stderr, "flushing %d\n",bucket_num);
 	int i;
 	UINT16 state, new_state;
 	UINT16 already_flushed = 0;
 
-	bucket_t* current_bucket = buffer->buckets[bucket_num];
+	bucket_t* current_bucket = cache->buckets[bucket_num];
 	//if someone else flushing, return failure
-	if (current_bucket->header.flushing_lock) {
+	if (current_bucket->header.write_back_lock) {
 		return 0;
 	}
 	//Step 1: try acquire the flush lock (contention should be unlikely for this CAS, so the acquisition should ususally succeed)
-	if (InterlockedCompareExchange16((volatile short*)&current_bucket->header.flushing_lock, 1, 0) != 0) {
+	if (InterlockedCompareExchange16((volatile short*)&current_bucket->header.write_back_lock, 1, 0) != 0) {
 		return 0;
 	}
 
@@ -92,22 +92,22 @@ int bucket_flush(flushbuffer_t* buffer, int bucket_num) {
 	wait_writes();
 
 	//Step 6: release the flushing lock
-	current_bucket->header.flushing_lock = 0;
+	current_bucket->header.write_back_lock = 0;
 	_mm_sfence();
 
 	return 1;
 }
 
-/*int buffer_add(flushbuffer_t* buffer, UINT64 key, void* addr) {
+/*int cache_add(linkcache_t* cache, UINT64 key, void* addr) {
 	int bucket_num = get_bucket(key);
 	UINT16 hash = get_hash(key);
 
-	bucket_t* bucket = buffer->buckets[bucket_num];
+	bucket_t* bucket = cache->buckets[bucket_num];
 retry:
 	UINT16 state = bucket->header.local_flags;
 	
 	if (all_busy(state)) {
-		if (bucket_flush(buffer, bucket_num)) {
+		if (bucket_wb(cache, bucket_num)) {
 			goto retry;
 		}
 		return 0;
@@ -136,13 +136,13 @@ retry:
 
 } */
 
-int buffer_try_link_and_add(flushbuffer_t* buffer, UINT64 key, volatile void** target, volatile void* oldvalue, volatile void* value) {
+int cache_try_link_and_add(linkcache_t* cache, UINT64 key, volatile void** target, volatile void* oldvalue, volatile void* value) {
 	
 	unsigned bucket_num = get_bucket(key);
 	//fprintf(stderr, "adding %d\n", bucket_num);
 	UINT16 hash = get_hash(key);
 
-	bucket_t* bucket = buffer->buckets[bucket_num];
+	bucket_t* bucket = cache->buckets[bucket_num];
 
 #ifdef TSX_ENABLED
 	//first try to do the linking and insertion through a TSX transaction
@@ -176,7 +176,7 @@ retry:
 	UINT16 state = bucket->header.local_flags;
 
 	if (no_free_index(state)) {
-		if (!(no_completed_entries(state)) &&  (bucket_flush(buffer, bucket_num))) {
+		if (!(no_completed_entries(state)) &&  (bucket_wb(cache, bucket_num))) {
 			goto retry;
 		}
 		return 0;
@@ -194,7 +194,7 @@ retry:
 	bucket->addresses[i] = target; //FIXME is this right ???
 	bucket->hashes[i] = hash;
 
-	if (InterlockedCompareExchangePointer((volatile PVOID*)target, (PVOID)mark_ptr_buffer((UINT_PTR)value), (PVOID)oldvalue) != oldvalue) {
+	if (InterlockedCompareExchangePointer((volatile PVOID*)target, (PVOID)mark_ptr_cache((UINT_PTR)value), (PVOID)oldvalue) != oldvalue) {
 		//abort
 		state = bucket->header.local_flags;
 		new_state = state;
@@ -215,17 +215,17 @@ retry:
 	}
 
 
-	InterlockedCompareExchangePointer((volatile PVOID*)target, (PVOID)value, (PVOID)mark_ptr_buffer((UINT_PTR) value));
+	InterlockedCompareExchangePointer((volatile PVOID*)target, (PVOID)value, (PVOID)mark_ptr_cache((UINT_PTR) value));
 
 	return 1;
 
 }
 
-int buffer_scan(flushbuffer_t* buffer, UINT64 key) {
+int cache_scan(linkcache_t* cache, UINT64 key) {
 	unsigned bucket_num = get_bucket(key);
 	UINT16 hash = get_hash(key);
 
-	bucket_t* to_search = buffer->buckets[bucket_num];
+	bucket_t* to_search = cache->buckets[bucket_num];
 	if (all_free(to_search->header.local_flags)) {
 		return 0;
 	}
@@ -233,12 +233,12 @@ int buffer_scan(flushbuffer_t* buffer, UINT64 key) {
 	for (i = 0; i < NUM_ENTRIES_PER_BUCKET; i++) {
 		if ((to_search->hashes[i] == hash)) {
 			if (is_busy(to_search->header.local_flags, i)) {
-				return bucket_flush(buffer, bucket_num);
+				return bucket_wb(cache, bucket_num);
 			}
 			//if an entry for the key is there, it is pending, and the pointer has been marked (meaning the link happened), then I shpuld flush the pointer before I return
-			else if ((is_pending(to_search->header.local_flags, i)) && (is_marked_ptr_buffer((UINT_PTR)*(void**)(to_search->addresses[i])))){
+			else if ((is_pending(to_search->header.local_flags, i)) && (is_marked_ptr_cache((UINT_PTR)*(void**)(to_search->addresses[i])))){
 				void* val = *(void**)(to_search->addresses[i]);
-				write_data_wait((void*)unmark_ptr_buffer((UINT_PTR)val), 1);
+				write_data_wait((void*)unmark_ptr_cache((UINT_PTR)val), 1);
 			}
 		}
 	}

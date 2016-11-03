@@ -18,7 +18,7 @@ written to non-volatile memory*/
 
 typedef union header_t {
 	struct {
-		volatile UINT16 flushing_lock;
+		volatile UINT16 write_back_lock;
 		volatile UINT16 local_flags;
 	};
 	volatile UINT32 all;
@@ -30,30 +30,30 @@ typedef CACHE_ALIGNED struct bucket_t {
 	volatile void* addresses[6];
 } bucket_t;
 
-typedef CACHE_ALIGNED struct flushbuffer_t {
+typedef CACHE_ALIGNED struct linkcache_t {
 	bucket_t* buckets[NUM_BUCKETS];
-} flushbuffer_t;
+} linkcache_t;
 
 
-//create a new buffer
-flushbuffer_t* buffer_create();
+//create a new cache
+linkcache_t* cache_create();
 
-//free a buffer
-void buffer_destroy(flushbuffer_t* buffer);
+//free a cache
+void cache_destroy(linkcache_t* cache);
 
-//adds a new entry to the buffer
-//int buffer_add(flushbuffer_t* buffer, UINT64 key, void* addr);
+//adds a new entry to the cache
+//int cache_add(linkcache_t* cache, UINT64 key, void* addr);
 
 //could have this not be public
-//i.e., it can be called internally in case of an add that fills the buffer
+//i.e., it can be called internally in case of an add that fills the cache
 //or if a search finds the key
-int bucket_flush(flushbuffer_t* buffer, int bucket_num);
+int bucket_wb(linkcache_t* cache, int bucket_num);
 
-int buffer_scan(flushbuffer_t* buffer, UINT64 key);
+int cache_scan(linkcache_t* cache, UINT64 key);
 
-int buffer_try_link_and_add(flushbuffer_t* buffer, UINT64 key, volatile void** target, volatile void* oldvalue, volatile void* value);
+int cache_try_link_and_add(linkcache_t* cache, UINT64 key, volatile void** target, volatile void* oldvalue, volatile void* value);
 
-void buffer_flush_all_buckets(flushbuffer_t* buffer);
+void cache_wb_all_buckets(linkcache_t* cache);
 //00 - free
 //01 - pending
 //10 - busy
@@ -126,14 +126,14 @@ inline int no_free_index(UINT16 bmap) {
 	return 0;
 }
 
-static inline UINT_PTR mark_ptr_buffer(UINT_PTR p) {
+static inline UINT_PTR mark_ptr_cache(UINT_PTR p) {
 	return (p | (UINT_PTR)0x02);
 }
 
-static inline UINT_PTR unmark_ptr_buffer(UINT_PTR p) {
+static inline UINT_PTR unmark_ptr_cache(UINT_PTR p) {
 	return(p & ~(UINT_PTR)0x02);
 }
-static inline int is_marked_ptr_buffer(UINT_PTR p) {
+static inline int is_marked_ptr_cache(UINT_PTR p) {
 	return (int)(p & (UINT_PTR)0x02);
 }
 
