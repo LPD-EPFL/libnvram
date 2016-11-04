@@ -1,7 +1,17 @@
-#include "FlushBuffer_one_cl.h"
-#include <stdio.h>
+#include "link_cache.h"
+
+#ifdef DO_PROFILE
+extern __thread uint64_t inserts;
+extern __thread uint64_t removes;
+#endif
+
 linkcache_t* cache_create() {
 	int i;
+
+#ifdef DO_PROFILE
+    inserts = 0;
+    removes = 0;
+#endif
 
 	linkcache_t* new_cache = (linkcache_t*)_aligned_malloc(sizeof(linkcache_t), CACHE_LINE_SIZE);
 
@@ -61,7 +71,7 @@ int bucket_wb(linkcache_t* cache, int bucket_num) {
 		return 0;
 	}
 	//Step 1: try acquire the flush lock (contention should be unlikely for this CAS, so the acquisition should ususally succeed)
-	if (InterlockedCompareExchange16((volatile short*)&current_bucket->header.write_back_lock, 1, 0) != 0) {
+	if (CAS_U16((volatile short*)&current_bucket->header.write_back_lock, 0, 1) != 0) {
 		return 0;
 	}
 
@@ -82,11 +92,14 @@ int bucket_wb(linkcache_t* cache, int bucket_num) {
 		for (i = 0; i < NUM_ENTRIES_PER_BUCKET; i++) {
 			if (is_busy(state, i)) {
 				new_state = mark_free(new_state, i);
+#ifdef DO_PROFILE
+                removes++;
+#endif
 				already_flushed = mark_busy(already_flushed, i);
 			}
 		}
 
-	} while (InterlockedCompareExchange16((volatile short*)&current_bucket->header.local_flags, new_state, state) != state);
+	} while (CAS_U16((volatile short*)&current_bucket->header.local_flags, state, new_state) != state);
 
 	//Step 5: make sure the write-backs which I have issued are written to persistent memory
 	wait_writes();
@@ -161,6 +174,9 @@ int cache_try_link_and_add(linkcache_t* cache, UINT64 key, volatile void** targe
 			bucket->hashes[i] = hash;
 			if (*target == oldvalue) {
 				*target = value;
+#ifdef DO_PROFILE
+                inserts++;
+#endif
 				_xend();
 				return 1;
 			}
@@ -187,20 +203,20 @@ retry:
 	UINT16 new_state = state;
 	new_state = mark_pending(new_state, i);
 
-	if (InterlockedCompareExchange16((volatile short*)&bucket->header.local_flags, new_state, state) != state) {
+	if (CAS_U16((volatile short*)&bucket->header.local_flags, state, new_state) != state) {
 		goto retry;
 	}
 
 	bucket->addresses[i] = target; //FIXME is this right ???
 	bucket->hashes[i] = hash;
 
-	if (InterlockedCompareExchangePointer((volatile PVOID*)target, (PVOID)mark_ptr_cache((UINT_PTR)value), (PVOID)oldvalue) != oldvalue) {
+	if (CAS_PTR((volatile PVOID*)target, (PVOID) oldvalue, (PVOID)mark_ptr_cache((UINT_PTR)value)) != oldvalue) {
 		//abort
 		state = bucket->header.local_flags;
 		new_state = state;
 		new_state = mark_free(new_state, i);
 
-		while (InterlockedCompareExchange16((volatile short*)&bucket->header.local_flags, new_state, state) != state) {
+		while (CAS_U16((volatile short*)&bucket->header.local_flags, state, new_state) != state) {
 			_mm_pause();
 		}
 		return 0;
@@ -210,13 +226,16 @@ retry:
 	new_state = state;
 	new_state = mark_busy(new_state, i);
 
-	while (InterlockedCompareExchange16((volatile short*)&bucket->header.local_flags, new_state, state) != state) {
+	while (CAS_U16((volatile short*)&bucket->header.local_flags, state, new_state) != state) {
 		_mm_pause();
 	}
 
 
-	InterlockedCompareExchangePointer((volatile PVOID*)target, (PVOID)value, (PVOID)mark_ptr_cache((UINT_PTR) value));
+	CAS_PTR((volatile PVOID*)target,(PVOID)mark_ptr_cache((UINT_PTR) value), (PVOID) value);
 
+#ifdef DO_PROFILE
+    inserts++;
+#endif
 	return 1;
 
 }
@@ -243,4 +262,10 @@ int cache_scan(linkcache_t* cache, UINT64 key) {
 		}
 	}
 	return 0;
+}
+
+int cache_size(linkcache_t* cache) {
+    int size = 0;
+
+    return size;
 }

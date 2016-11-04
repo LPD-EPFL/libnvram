@@ -1,10 +1,7 @@
 #pragma once
-#pragma once
 
+#include "utils.h"
 #include "nv_memory.h"
-
-#include <immintrin.h>
-#include <Windows.h>
 
 /* this is basically a hash table that should be kept in
 volatile memory which stores the cache lines that need to be persistenly
@@ -14,7 +11,6 @@ written to non-volatile memory*/
 #define NUM_BUCKETS 32
 #define KEY_TO_HASH_MOD 65536
 #define NUM_ENTRIES_PER_BUCKET 6
-
 
 typedef union header_t {
 	struct {
@@ -54,6 +50,9 @@ int cache_scan(linkcache_t* cache, UINT64 key);
 int cache_try_link_and_add(linkcache_t* cache, UINT64 key, volatile void** target, volatile void* oldvalue, volatile void* value);
 
 void cache_wb_all_buckets(linkcache_t* cache);
+
+int cache_size(linkcache_t* cache); //not thread-safe!
+
 //00 - free
 //01 - pending
 //10 - busy
