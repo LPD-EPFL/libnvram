@@ -6,7 +6,7 @@ PROF = prof
 CC ?= gcc
 
 CFLAGS = -O3 -Wall
-LDFLAGS = -lm -lrt -lpthread -lnvmem
+LDFLAGS = -lm -lrt -lpthread
 VER_FLAGS = -D_GNU_SOURCE
 
 MEASUREMENTS = 0
@@ -18,29 +18,21 @@ endif
 
 UNAME := $(shell uname -n)
 
-all: libnvmem.a nvmem_test
+all: link-cache_test
 
-default: nvmem_test
-
-nvmem.o: $(SRC)/nvmem.c 
-	$(CC) $(VER_FLAGS) -c $(SRC)/nvmem.c $(CFLAGS) -I./$(INCLUDE)
+default: link-cache_test
 
 ifeq ($(MEASUREMENTS),1)
-VER_FLAGS += -DDO_TIMINGS
-MEASUREMENTS_FILES += measurements.o
+VER_FLAGS += -DDO_PROFILE
+#MEASUREMENTS_FILES += measurements.o
 endif
 
-libnvmem.a: nvmem.o $(INCLUDE)/nvmem.h $(MEASUREMENTS_FILES)
-	@echo Archive name = libnvmem.a
-	ar -r libnvmem.a nvmem.o $(MEASUREMENTS_FILES)
-	rm -f *.o	
+link-cache.o: $(SRC)/link-cache.c
+	$(CC) $(VER_FLAGS) -c $(SRC)/link-cache.c $(CFLAGS) -I./$(INCLUDE)
 
-nvmem_test.o: $(SRC)/nvmem_test.c libnvmem.a
-	$(CC) $(VER_FLAGS) -c $(SRC)/nvmem_test.c $(CFLAGS) -I./$(INCLUDE)
-
-nvmem_test: libnvmem.a nvmem_test.o
-	$(CC) $(VER_FLAGS) -o nvmem_test nvmem_test.o $(CFLAGS) $(LDFLAGS) -I./$(INCLUDE) -L./ 
+link-cache_test: link-cache.o $(SRC)/link-cache_test.c
+	$(CC) $(VER_FLAGS) $(SRC)/link-cache_test.c link-cache.o $(CFLAGS) $(LDFLAGS) -I./$(INCLUDE) -L./ -o link-cache_test
 
 
 clean:
-	rm -f *.o *.a nvmem_test
+	rm -f *.o *.a link-cache_test

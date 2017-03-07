@@ -17,7 +17,8 @@
 #include <unistd.h>
 #include <malloc.h>
 
-#include "nv-memory.h"
+#include "nv_memory.h"
+#include "random.h"
 #include "utils.h"
 #include "link-cache.h"
 
@@ -38,6 +39,8 @@ int duration = 1000;
 int seed = 0;
 __thread unsigned long * seeds;
 uint32_t rand_max;
+void** data;
+
 #define rand_min 1
 
 static volatile int stop;
@@ -89,6 +92,7 @@ barrier_t barrier, barrier_global;
 typedef struct thread_data
 {
   uint8_t id;
+  linkcache_t* lc;
   uint64_t inserted;
   uint64_t removed;
 } thread_data_t;
@@ -97,6 +101,7 @@ typedef struct thread_data
 void* test(void* thread) {
   thread_data_t* td = (thread_data_t*) thread;
   uint8_t ID = td->id;
+  linkcache_t* lc = td->lc;
   inserts = 0;
   removes = 0;
 
@@ -105,8 +110,10 @@ void* test(void* thread) {
   barrier_cross(&barrier_global);
 
   while (stop == 0) {
-	  int next = (my_random(&(seeds[0]), &(seeds[1]), &(seeds[2])) % rand_max);
-      try_link_and_add(lc, next);
+	  uint64_t next = (my_random(&(seeds[0]), &(seeds[1]), &(seeds[2])) % rand_max);
+      void* old = data[next];
+      void* new = (void*) ID;
+      cache_try_link_and_add(lc, next, &(data[next]), old, new);
   }
 
 
@@ -129,7 +136,7 @@ void* test(void* thread) {
  *  cache_wb_all_buckets
  */
 
-int main() {
+int main(int argc, char **argv) {
 
   struct option long_options[] = {
     // These options don't set a flag
@@ -191,6 +198,7 @@ int main() {
 	}
     }
 
+  linkcache_t* lc = cache_create();
 
 
   printf("# threads: %d / range: %zu\n", num_threads, range);
@@ -204,6 +212,7 @@ int main() {
   
 
   rand_max = range;
+  data = (void**) calloc(range, sizeof(void*));
 
   pthread_t threads[num_threads];
   pthread_attr_t attr;
@@ -262,7 +271,7 @@ int main() {
   uint64_t sum_removed = 0;
   uint64_t current_size;
 
-  current_size = get_size(lc);
+  current_size = cache_size(lc);
 
 
  for (t=0; t< num_threads; t++) {
@@ -282,6 +291,7 @@ int main() {
  }
 
   free(tds);
+  cache_destroy(lc);
 
   pthread_exit(NULL);
   return 0;

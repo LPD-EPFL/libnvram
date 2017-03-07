@@ -1,6 +1,7 @@
-#pragma once
+#ifndef _NV_MEMORY_H_
+#define _NV_MEMORY_H_
 
-#include <Windows.h>
+#include "utils.h" 
 
 #define SIMULATE_LATENCIES 1
 
@@ -15,7 +16,14 @@
 #define CACHE_LINE_SIZE 64
 #endif
 
-#define CACHE_ALIGNED __declspec(align(CACHE_LINE_SIZE)) 
+#if defined(_MSC_VER)
+#define CACHE_ALIGNED __declspec(align(CACHE_LINE_SIZE))
+#else
+#if defined(__GNUC__)
+#define CACHE_ALIGNED __attribute__ ((aligned(CACHE_LINE_SIZE)))
+#endif
+#endif
+
 // TODO add operations to do moves from volatile memory to persistent memeory addresses using non-temporal stores
 // for examples, see https://github.com/pmem/nvml/blob/master/src/libpmem/pmem.c
 
@@ -60,12 +68,12 @@ inline void write_data_wait(void* addr, size_t sz) {
 
 inline void wait_writes() {
 #ifdef SIMULATE_LATENCIES
-	ULONG64 startCycles = __rdtsc();
+	ULONG64 startCycles = getticks();
 	ULONG64 endCycles = startCycles + WAIT_WRITES_DELAY;
 	ULONG64 cycles = startCycles;
 
 	while (cycles < endCycles) {
-		cycles = __rdtsc();
+		cycles = getticks();
 	}
 	_mm_sfence();
 #else
@@ -76,12 +84,12 @@ inline void wait_writes() {
 //size is in terms of number of cache lines
 inline void write_data_wait(void* addr, size_t sz) {
 #ifdef SIMULATE_LATENCIES
-	ULONG64 startCycles = __rdtsc();
+	ULONG64 startCycles =getticks();
 	ULONG64 endCycles = startCycles + WRITE_DATA_WAIT_DELAY;
 	ULONG64 cycles = startCycles;
 
 	while (cycles < endCycles) {
-		cycles = __rdtsc();
+		cycles = getticks();
 	}
 	_mm_sfence();
 #else
@@ -102,17 +110,19 @@ inline void write_data_nowait(void* addr, size_t sz) {
 		_mm_pause();
 	}
 	else {
-		ULONG64 startCycles = __rdtsc();
+		ULONG64 startCycles = getticks();
 		ULONG64 endCycles = startCycles + WRITE_DATA_NOWAIT_DELAY;
 		ULONG64 cycles = startCycles;
 
 		while (cycles < endCycles) {
-			cycles = __rdtsc();
+			cycles = getticks();
 		}
 	}
 #else
 	write_data_wait(addr, sz);
 #endif
 }
+
+#endif
 
 #endif

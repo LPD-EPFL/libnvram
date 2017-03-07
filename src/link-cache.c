@@ -1,4 +1,4 @@
-#include "link_cache.h"
+#include "link-cache.h"
 
 #ifdef DO_PROFILE
 extern __thread uint64_t inserts;
@@ -13,10 +13,10 @@ linkcache_t* cache_create() {
     removes = 0;
 #endif
 
-	linkcache_t* new_cache = (linkcache_t*)_aligned_malloc(sizeof(linkcache_t), CACHE_LINE_SIZE);
+	linkcache_t* new_cache = (linkcache_t*)memalign(CACHE_LINE_SIZE, sizeof(linkcache_t)); //this can be allocated in volatile memory
 
 	for (i = 0; i < NUM_BUCKETS; i++) {
-		new_cache->buckets[i] = (bucket_t*)_aligned_malloc(sizeof(bucket_t), CACHE_LINE_SIZE);
+		new_cache->buckets[i] = (bucket_t*)memalign(CACHE_LINE_SIZE, sizeof(bucket_t));
 		new_cache->buckets[i]->header.all = 0;
 	}
 
@@ -28,9 +28,9 @@ void cache_destroy(linkcache_t* cache) {
 	int i;
 
 	for (i = 0; i < NUM_BUCKETS; i++) {
-		_aligned_free(cache->buckets[i]);
+		free(cache->buckets[i]);
 	}
-	_aligned_free(cache);
+	free(cache);
 }
 
 
@@ -188,8 +188,10 @@ int cache_try_link_and_add(linkcache_t* cache, UINT64 key, volatile void** targe
 	}
 #endif
 	//if we do not manage to to execute the tsx transaction, try through successive CASes
+    UINT16 state;
 retry:
-	UINT16 state = bucket->header.local_flags;
+
+	state = bucket->header.local_flags;
 
 	if (no_free_index(state)) {
 		if (!(no_completed_entries(state)) &&  (bucket_wb(cache, bucket_num))) {
