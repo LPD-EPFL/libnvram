@@ -112,8 +112,8 @@ void* test(void* thread) {
   while (stop == 0) {
 	  uint64_t next = (my_random(&(seeds[0]), &(seeds[1]), &(seeds[2])) % rand_max);
       void* old = data[next];
-      void* new = (void*) ID;
-      cache_try_link_and_add(lc, next, &(data[next]), old, new);
+      void* new = (void*) (ID+1);
+      cache_try_link_and_add(lc, next, (volatile void**) &(data[next]), old, new);
   }
 
 
@@ -214,6 +214,8 @@ int main(int argc, char **argv) {
   rand_max = range;
   data = (void**) calloc(range, sizeof(void*));
 
+
+
   pthread_t threads[num_threads];
   pthread_attr_t attr;
   int rc;
@@ -234,7 +236,11 @@ int main(int argc, char **argv) {
       tds[t].id = t;
       tds[t].inserted = 0;
       tds[t].removed = 0;
+      tds[t].lc = lc;
+    }
 
+
+  for(t = 0; t < num_threads; t++) {
       rc = pthread_create(&threads[t], &attr, test, tds + t);
       if (rc)
 	{

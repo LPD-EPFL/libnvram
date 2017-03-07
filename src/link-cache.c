@@ -20,7 +20,7 @@ linkcache_t* cache_create() {
 		new_cache->buckets[i]->header.all = 0;
 	}
 
-	MemoryBarrier();
+	_mm_sfence();
 	return new_cache;
 }
 
@@ -38,7 +38,6 @@ void cache_destroy(linkcache_t* cache) {
 	make sure everything is flushed
 */
 void cache_wb_all_buckets(linkcache_t* cache) {
-	//fprintf(stderr, "flushing all\n");
 	// is there a cheaper way of doing this?
 	int i;
 	char flushed[NUM_BUCKETS];
@@ -60,7 +59,6 @@ void cache_wb_all_buckets(linkcache_t* cache) {
 }
 
 int bucket_wb(linkcache_t* cache, int bucket_num) {
-	//fprintf(stderr, "flushing %d\n",bucket_num);
 	int i;
 	UINT16 state, new_state;
 	UINT16 already_flushed = 0;
@@ -152,11 +150,9 @@ retry:
 int cache_try_link_and_add(linkcache_t* cache, UINT64 key, volatile void** target, volatile void* oldvalue, volatile void* value) {
 	
 	unsigned bucket_num = get_bucket(key);
-	//fprintf(stderr, "adding %d\n", bucket_num);
 	UINT16 hash = get_hash(key);
 
 	bucket_t* bucket = cache->buckets[bucket_num];
-
 #ifdef TSX_ENABLED
 	//first try to do the linking and insertion through a TSX transaction
 	unsigned int status = _xbegin();
@@ -209,6 +205,7 @@ retry:
 		goto retry;
 	}
 
+
 	bucket->addresses[i] = target; //FIXME is this right ???
 	bucket->hashes[i] = hash;
 
@@ -219,6 +216,9 @@ retry:
 		new_state = mark_free(new_state, i);
 
 		while (CAS_U16((volatile short*)&bucket->header.local_flags, state, new_state) != state) {
+		    state = bucket->header.local_flags;
+		    new_state = state;
+		    new_state = mark_free(new_state, i);
 			_mm_pause();
 		}
 		return 0;
@@ -229,11 +229,14 @@ retry:
 	new_state = mark_busy(new_state, i);
 
 	while (CAS_U16((volatile short*)&bucket->header.local_flags, state, new_state) != state) {
+	    state = bucket->header.local_flags;
+	    new_state = state;
+	    new_state = mark_busy(new_state, i);
 		_mm_pause();
 	}
 
 
-	CAS_PTR((volatile PVOID*)target,(PVOID)mark_ptr_cache((UINT_PTR) value), (PVOID) value);
+	UNUSED PVOID dummy = CAS_PTR((volatile PVOID*)target,(PVOID)mark_ptr_cache((UINT_PTR) value), (PVOID) value);
 
 #ifdef DO_PROFILE
     inserts++;

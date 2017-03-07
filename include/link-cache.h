@@ -63,47 +63,47 @@ int cache_size(linkcache_t* cache); //not thread-safe!
 #define STATE_PENDING 0x1
 #define STATE_BUSY 0x2
 
-inline UINT32 mark_pending(UINT16 bmap, int pos) {
+static inline UINT32 mark_pending(UINT16 bmap, int pos) {
 	return (bmap & ~(0x00000003 << (2 * pos))) | (0x1 << (2 * pos));
 }
 
-inline UINT32 mark_busy(UINT16 bmap, int pos) {
+static inline UINT32 mark_busy(UINT16 bmap, int pos) {
 	return (bmap & ~(0x00000003 << (2 * pos))) | (0x2 << (2 * pos));
 }
 
-inline UINT32 mark_free(UINT16 bmap, int pos) {
+static inline UINT32 mark_free(UINT16 bmap, int pos) {
 	return bmap & ~(0x00000003 << (2*pos));
 }
 
-inline int is_free(UINT16 bmap, int pos) {
+static inline int is_free(UINT16 bmap, int pos) {
 	return (bmap & (0x03 << (2 * pos))) == 0;
 }
 
-inline int is_pending(UINT16 bmap, int pos) {
+static inline int is_pending(UINT16 bmap, int pos) {
 	return (bmap & (0x03 << (2 * pos))) == 1;
 }
 
-inline int is_busy(UINT16 bmap, int pos) {
+static inline int is_busy(UINT16 bmap, int pos) {
 	return (bmap & (0x02 << (2*pos))) != 0;
 }
 
-inline int no_completed_entries(UINT16 bmap) {
+static inline int no_completed_entries(UINT16 bmap) {
 	return (bmap | 0xaaaa) == 0;
 }
 
-inline int all_free(UINT16 bmap) {
+static inline int all_free(UINT16 bmap) {
 	return (bmap == 0);
 }
 
-inline UINT16 get_hash(UINT64 key) {
+static inline UINT16 get_hash(UINT64 key) {
 	return (key / NUM_BUCKETS) % KEY_TO_HASH_MOD;
 }
 
-inline unsigned get_bucket(UINT64 key) {
+static inline unsigned get_bucket(UINT64 key) {
 	return key % NUM_BUCKETS;
 }
 
-inline int find_free_index(UINT16 bmap) {
+static inline int find_free_index(UINT16 bmap) {
 	int i = 0;
 	while ((bmap & 0x03) != 0) {
 		bmap = bmap >> 2;
@@ -115,7 +115,7 @@ inline int find_free_index(UINT16 bmap) {
 	return i;
 }
 
-inline int no_free_index(UINT16 bmap) {
+static inline int no_free_index(UINT16 bmap) {
 	int i = 0;
 	while ((bmap & 0x03) != 0) {
 		bmap = bmap >> 2;

@@ -1,3 +1,5 @@
+.PHONY: all
+
 SRC = src
 INCLUDE = include
 BENCH = benchmarks

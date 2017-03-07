@@ -5,29 +5,9 @@
 extern "C" {
 #endif
 
-#ifdef _WIN32
-
-/* WINDOWS */
-
-#include <immintrin.h>
-#include <Windows.h>
-
-#define CAS_U16(a,b,c) InterlockedCompareExchange16(a,c,b)
-#define CAS_U32(a,b,c) InterlockedCompareExchange32(a,c,b)
-#define CAS_U64(a,b,c) InterlockedCompareExchange64(a,c,b)
-#define CAS_PTR(a,b,c) InterlockedCompareExchangePointer(a,c,b)
-
-typedef UINT64 ticks;
-
-static inline ticks 
-getticks(void) 
-{
-    return __rdtsc();
-}
-
-#else 
-
-/* UNIX */
+#if !defined(UNUSED)
+#define UNUSED __attribute__ ((unused))
+#endif
 
 #ifdef __SSE__
 #include <xmmintrin.h>
@@ -84,8 +64,6 @@ getticks()
 {
   return get_cycle_count();
 }
-#endif
-
 #endif
 
 #ifdef __cplusplus

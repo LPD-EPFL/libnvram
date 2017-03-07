@@ -16,20 +16,14 @@
 #define CACHE_LINE_SIZE 64
 #endif
 
-#if defined(_MSC_VER)
-#define CACHE_ALIGNED __declspec(align(CACHE_LINE_SIZE))
-#else
-#if defined(__GNUC__)
 #define CACHE_ALIGNED __attribute__ ((aligned(CACHE_LINE_SIZE)))
-#endif
-#endif
 
 // TODO add operations to do moves from volatile memory to persistent memeory addresses using non-temporal stores
 // for examples, see https://github.com/pmem/nvml/blob/master/src/libpmem/pmem.c
 
 
 
-inline size_t num_cache_lines(size_t size_bytes) {
+static inline size_t num_cache_lines(size_t size_bytes) {
 	if (size_bytes == 0) return 0;
 	return (((size_bytes - 1)/ CACHE_LINE_SIZE) + 1);
 }
@@ -39,11 +33,11 @@ inline size_t num_cache_lines(size_t size_bytes) {
 #define _mm_clflushopt(addr) asm volatile(".byte 0x66; clflush %0" : "+m" (*(volatile char *)addr));
 #define _mm_clwb(addr) asm volatile(".byte 0x66; xsaveopt %0" : "+m" (*(volatile char *)addr));
 
-inline void wait_writes() {
+static inline void wait_writes() {
 	_mm_sfence();
 }
 
-inline void write_data_nowait(void* addr, size_t sz) {
+static inline void write_data_nowait(void* addr, size_t sz) {
 	UINT_PTR p;
 
 	for (p = (UINT_PTR)adddr & ~(CACHE_LINE_SIZE - 1; p < (UINT_PTR)addr + sz; p += CACHE_LINE_SIZE) {
@@ -51,7 +45,7 @@ inline void write_data_nowait(void* addr, size_t sz) {
 	}
 }
 
-inline void write_data_wait(void* addr, size_t sz) {
+static inline void write_data_wait(void* addr, size_t sz) {
 	UINT_PTR p;
 
 		for (p = (UINT_PTR)adddr & ~(CACHE_LINE_SIZE - 1; p < (UINT_PTR)addr + sz; p += CACHE_LINE_SIZE) {
@@ -66,7 +60,7 @@ inline void write_data_wait(void* addr, size_t sz) {
 #define _mm_clwb(addr) _mm_clflush(addr)
 
 
-inline void wait_writes() {
+static inline void wait_writes() {
 #ifdef SIMULATE_LATENCIES
 	ULONG64 startCycles = getticks();
 	ULONG64 endCycles = startCycles + WAIT_WRITES_DELAY;
@@ -82,7 +76,7 @@ inline void wait_writes() {
 }
 
 //size is in terms of number of cache lines
-inline void write_data_wait(void* addr, size_t sz) {
+static inline void write_data_wait(void* addr, size_t sz) {
 #ifdef SIMULATE_LATENCIES
 	ULONG64 startCycles =getticks();
 	ULONG64 endCycles = startCycles + WRITE_DATA_WAIT_DELAY;
@@ -101,7 +95,7 @@ inline void write_data_wait(void* addr, size_t sz) {
 #endif
 }
 
-inline void write_data_nowait(void* addr, size_t sz) {
+static inline void write_data_nowait(void* addr, size_t sz) {
 #ifdef SIMULATE_LATENCIES
 	//this might just take a few cycles if we are not waiting for the op to complete
 	//just reading rdtsc may take a few tens of cycles
