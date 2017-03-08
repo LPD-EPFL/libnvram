@@ -148,11 +148,11 @@ int cache_try_link_and_add(linkcache_t* cache, UINT64 key, volatile void** targe
 			bucket->hashes[i] = hash;
 			if (*target == oldvalue) {
 				*target = value;
+				_xend();
 #ifdef DO_PROFILE
                 inserts++;
                 inserts_tsx++;
 #endif
-				_xend();
 				return 1;
 			}
 			else {

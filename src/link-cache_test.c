@@ -23,14 +23,6 @@
 #include "link-cache.h"
 
 /*
- *  This test versifies the correction of the link cache when accessed concurrently by multiple threads;
- *  Each thread maintains the sum of the elements it has added to the cache;
- *  It also maintains the sum of the elements it has removed and written back;
- *  At the end of the test, the sum of the elements still in the cache must be
- *  equal to the difference between all the elements that were added and the elements that were removed;
- */
-
-/*
  *  Global variables
  */
 
@@ -117,10 +109,9 @@ void* test(void* thread) {
   while (stop == 0) {
 	  uint64_t next = (my_random(&(seeds[0]), &(seeds[1]), &(seeds[2])) % rand_max);
       void* old = data[next];
-      void* new = (void*) (ID+1);
+      void* new = (void*)((uintptr_t) (ID+1));
       cache_try_link_and_add(lc, next, (volatile void**) &(data[next]), old, new);
   }
-
 
   barrier_cross(&barrier);
 
