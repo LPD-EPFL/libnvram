@@ -46,10 +46,10 @@ void** data;
 static volatile int stop;
 
 
-/*#ifdef DO_PROFILE*/
+#ifdef DO_PROFILE
 __thread uint64_t inserts;
 __thread uint64_t removes;
-/*#endif*/
+#endif
 
 
 /*
@@ -102,8 +102,10 @@ void* test(void* thread) {
   thread_data_t* td = (thread_data_t*) thread;
   uint8_t ID = td->id;
   linkcache_t* lc = td->lc;
+#ifdef DO_PROFILE
   inserts = 0;
   removes = 0;
+#endif
 
   seeds = seed_rand();
 
@@ -119,8 +121,10 @@ void* test(void* thread) {
 
   barrier_cross(&barrier);
 
+#ifdef DO_PROFILE
   td->removed = removes;
   td->inserted = inserts;
+#endif
   barrier_cross(&barrier_global);
   pthread_exit(NULL);
 }
@@ -277,8 +281,10 @@ int main(int argc, char **argv) {
   uint64_t sum_removed = 0;
   uint64_t current_size;
 
+  current_size = 0;
+#ifdef DO_PROFILE
   current_size = cache_size(lc);
-
+#endif
 
  for (t=0; t< num_threads; t++) {
     sum_inserted+=tds[t].inserted;
@@ -294,6 +300,7 @@ int main(int argc, char **argv) {
     printf("Correct element count.\n");
     printf("Total number of inserts: %lu\n", sum_inserted);
     printf("Total number of removes: %lu\n", sum_removed);
+    printf("Elements currently in the cache: %lu\n", current_size);
  }
 
   free(tds);

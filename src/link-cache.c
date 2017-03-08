@@ -73,7 +73,13 @@ int bucket_wb(linkcache_t* cache, int bucket_num) {
 		return 0;
 	}
 
+#ifdef DO_PROFILE
+      uint64_t current_removes;
+#endif
 	do {
+#ifdef DO_PROFILE
+        current_removes = 0;
+#endif
 
 		//Step 2: get the bitmap of the state of the addresses in the bucket
 		state = current_bucket->header.local_flags;
@@ -91,7 +97,7 @@ int bucket_wb(linkcache_t* cache, int bucket_num) {
 			if (is_busy(state, i)) {
 				new_state = mark_free(new_state, i);
 #ifdef DO_PROFILE
-                removes++;
+                current_removes++;
 #endif
 				already_flushed = mark_busy(already_flushed, i);
 			}
@@ -99,6 +105,9 @@ int bucket_wb(linkcache_t* cache, int bucket_num) {
 
 	} while (CAS_U16((volatile short*)&current_bucket->header.local_flags, state, new_state) != state);
 
+#ifdef DO_PROFILE
+     removes+=current_removes;
+#endif
 	//Step 5: make sure the write-backs which I have issued are written to persistent memory
 	wait_writes();
 
@@ -109,43 +118,6 @@ int bucket_wb(linkcache_t* cache, int bucket_num) {
 	return 1;
 }
 
-/*int cache_add(linkcache_t* cache, UINT64 key, void* addr) {
-	int bucket_num = get_bucket(key);
-	UINT16 hash = get_hash(key);
-
-	bucket_t* bucket = cache->buckets[bucket_num];
-retry:
-	UINT16 state = bucket->header.local_flags;
-	
-	if (all_busy(state)) {
-		if (bucket_wb(cache, bucket_num)) {
-			goto retry;
-		}
-		return 0;
-	}
-
-	int i = find_free_index(state);
-
-	UINT16 new_state = state;
-	new_state = mark_pending(new_state, i);
-
-	if (InterlockedCompareExchange16((volatile short*) &bucket->header.local_flags, new_state, state) != state) {
-		goto retry;
-	}
-
-	bucket->addresses[i] = addr;
-	bucket->hashes[i] = hash;
-
-	state = bucket->header.local_flags;
-	new_state = state;
-	new_state = mark_busy(new_state, i);
-
-	while (InterlockedCompareExchange16((volatile short*)&bucket->header.local_flags, new_state, state) != state) {
-		_mm_pause();
-	}
-	return 1;
-
-} */
 
 int cache_try_link_and_add(linkcache_t* cache, UINT64 key, volatile void** target, volatile void* oldvalue, volatile void* value) {
 	
@@ -271,6 +243,19 @@ int cache_scan(linkcache_t* cache, UINT64 key) {
 
 int cache_size(linkcache_t* cache) {
     int size = 0;
+    int i;
+    int j;
+    UINT16 state;
+
+    //count the number of entries with state busy
+    for (i = 0; i < NUM_BUCKETS; i++) {
+        state = cache->buckets[i]->header.local_flags;
+        for (j = 0; j < NUM_ENTRIES_PER_BUCKET; j++) {
+            if (is_busy(state, j)) {
+                size++;
+            }
+        } 
+    }
 
     return size;
 }

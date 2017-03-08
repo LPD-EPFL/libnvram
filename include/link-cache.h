@@ -9,7 +9,6 @@
 volatile memory which stores the cache lines that need to be persistenly
 written to non-volatile memory*/
 
-
 #define NUM_BUCKETS 32
 #define KEY_TO_HASH_MOD 65536
 #define NUM_ENTRIES_PER_BUCKET 6
