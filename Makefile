@@ -13,6 +13,20 @@ VER_FLAGS = -D_GNU_SOURCE
 
 MEASUREMENTS = 0
 
+ifndef PC_NAME
+	PC_NAME = $(shell uname -n)
+endif
+
+ifeq ($(PC_NAME), lpdquad)
+    CFLAGS += -DTSX_ENABLED
+    CFLAGS += -mrtm
+endif
+
+ifeq ($(PC_NAME), lpdpc34)
+    CFLAGS += -DTSX_ENABLED
+    CFLAGS += -mrtm
+endif
+
 ifeq ($(VERSION),DEBUG) 
 CFLAGS = -O0 -ggdb -Wall -g -fno-inline
 VER_FLAGS += -DDEBUG

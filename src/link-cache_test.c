@@ -49,6 +49,9 @@ static volatile int stop;
 #ifdef DO_PROFILE
 __thread uint64_t inserts;
 __thread uint64_t removes;
+#ifdef TSX_ENABLED
+__thread uint64_t inserts_tsx;
+#endif
 #endif
 
 
@@ -124,6 +127,11 @@ void* test(void* thread) {
 #ifdef DO_PROFILE
   td->removed = removes;
   td->inserted = inserts;
+#ifdef TSX_ENABLED
+  fprintf(stderr, "Thread %d: %lu inserts, out of which %lu through HTM, %lu removes\n", ID, inserts, inserts_tsx, removes);
+#else
+  fprintf(stderr, "Thread %d: %lu inserts, %lu removes\n", ID, inserts, removes);
+#endif
 #endif
   barrier_cross(&barrier_global);
   pthread_exit(NULL);

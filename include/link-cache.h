@@ -1,6 +1,7 @@
 #pragma once
 
 #include <malloc.h>
+#include <immintrin.h>
 
 #include "utils.h"
 #include "nv_memory.h"

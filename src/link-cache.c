@@ -3,6 +3,9 @@
 #ifdef DO_PROFILE
 extern __thread uint64_t inserts;
 extern __thread uint64_t removes;
+#ifdef TSX_ENABLED
+extern __thread uint64_t inserts_tsx;
+#endif
 #endif
 
 linkcache_t* cache_create() {
@@ -11,6 +14,9 @@ linkcache_t* cache_create() {
 #ifdef DO_PROFILE
     inserts = 0;
     removes = 0;
+#ifdef TSX_ENABLED
+    inserts_tsx = 0;
+#endif
 #endif
 
 	linkcache_t* new_cache = (linkcache_t*)memalign(CACHE_LINE_SIZE, sizeof(linkcache_t)); //this can be allocated in volatile memory
@@ -144,6 +150,7 @@ int cache_try_link_and_add(linkcache_t* cache, UINT64 key, volatile void** targe
 				*target = value;
 #ifdef DO_PROFILE
                 inserts++;
+                inserts_tsx++;
 #endif
 				_xend();
 				return 1;
