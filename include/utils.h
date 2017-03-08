@@ -5,6 +5,19 @@
 extern "C" {
 #endif
 
+#ifndef CACHE_LINE_SIZE
+#define CACHE_LINE_SIZE 64
+#endif
+
+#define CACHE_ALIGNED __attribute__ ((aligned(CACHE_LINE_SIZE)))
+
+
+#ifndef EPOCH_CACHE_LINE_SIZE
+#define EPOCH_CACHE_LINE_SIZE 64
+#endif
+
+#define EPOCH_CACHE_ALIGNED __attribute__ ((aligned(EPOCH_CACHE_LINE_SIZE)))
+
 #if !defined(UNUSED)
 #define UNUSED __attribute__ ((unused))
 #endif

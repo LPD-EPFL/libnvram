@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _EPOCHALLOC_H_
+#define _EPOCHALLOC_H_
 
 /*TODO these two functions should use a fully-functional non-volatile memory allocator */
 #define nvalloc malloc
@@ -82,3 +83,5 @@ inline int NodeMemoryIsFree(void *ptr) {
 inline void MarkNodeMemoryAsFree(void * ptr) {
 	node_heap.Delete(ptr);
 }
+
+#endif

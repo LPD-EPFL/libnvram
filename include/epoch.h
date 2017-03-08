@@ -1,23 +1,8 @@
-//*********************************************************************
-//  Copyright (c) Microsoft Corporation.
-//
-// @File: epoch.h
-// @Owner: t-alekd
-//
-// Purpose:
-//
-//  Epoch based memory management.
-//  
-// Notes:
-//
-// @EndHeader@
-//*********************************************************************
-
-#pragma once
-
+#ifndef _EPOCH_H_
+#define _EPOCH_H_
 
 #include "epoch_impl.h"
-#include "PageBuffer.h"
+#include "active-page-table.h"
 
 // Use 64 bit timestamps.
 // This could lead to high space requirements just for storing the
@@ -206,7 +191,7 @@ struct EpochThreadData
 		UINT8 pad_ts[EPOCH_CACHE_LINE_SIZE];
 	};
 
-	page_buffer_t* page_buffer;
+	active_page_table_t* active_page_table;
 
 	// For chaining all epochs.
 	// Read shared by other threads during normal execution.
@@ -360,9 +345,9 @@ inline void EpochThreadData::Init() {
 	stats.Init();
 
 	//init the page buffer
-	page_buffer = create_page_buffer();
+	active_page_table = create_active_page_table();
 #ifdef BUFFERING_ON
-	page_buffer->shared_flush_buffer = link_flush_buffer;
+	active_page_table->shared_flush_buffer = link_flush_buffer;
 #endif
 }
 
@@ -382,7 +367,7 @@ inline void EpochThreadData::Uninit() {
 	// uninit the used vector buffer
 	vectorTsBuf.Uninit();
 #ifndef ESTIMATE_RECOVERY
-	destroy_page_buffer(page_buffer);
+	destroy_active_page_table(active_page_table);
 #endif
 }
 
@@ -472,7 +457,7 @@ inline void* EpochAllocNode(EpochThread opaqueEpoch, size_t size) {
 #ifdef SIMULATE_NAIVE_IMPLEMENTATION
 	write_data_wait(NULL, 1);
 #else
-	mark_page(epoch->page_buffer, NULL, size, epoch->ts, epoch->largestCollectedTs, 0);
+	mark_page(epoch->active_page_table, NULL, size, epoch->ts, epoch->largestCollectedTs, 0);
 #endif
 	return AllocNode(size);
 }
@@ -482,13 +467,14 @@ inline void EpochDeclareUnlinkNode(EpochThread opaqueEpoch, void * ptr, size_t s
 #ifdef SIMULATE_NAIVE_IMPLEMENTATION
 	write_data_wait(ptr, 1);
 #else
-	mark_page(epoch->page_buffer, ptr, size, epoch->ts, epoch->largestCollectedTs, 1);
+	mark_page(epoch->active_page_table, ptr, size, epoch->ts, epoch->largestCollectedTs, 1);
 #endif
 }
 
 inline void EpochFreeNode( void* ptr) {
 	//EpochThreadData *epoch = (EpochThreadData *)opaqueEpoch;
-	//mark_page(epoch->page_buffer, size);
+	//mark_page(epoch->active_page_table, size);
 	FreeNode(ptr);
 }
 
+#endif

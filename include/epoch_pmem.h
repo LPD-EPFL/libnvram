@@ -1,4 +1,6 @@
-#pragma once
+#ifndef _EPOCH_PMEM_H_
+#define _EPOCH_PMEM_H_
+
 // opaque type to store epoch data
 typedef void *EpochThread;
 
@@ -38,3 +40,5 @@ ULONG EpochGetGarbageCount(EpochThread epoch);
 // functions to force memory cleanup
 void EpochFlush(EpochThread opaqueEpoch);
 void EpochScan(EpochThread opaqueEpoch);
+
+#endif

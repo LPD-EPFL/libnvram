@@ -3,12 +3,12 @@
 /*
 	creates a page buffer with a certain number of preallocated free entries
 */
-page_buffer_t* create_page_buffer() {
+active_page_table_t* create_active_page_table() {
 	unsigned num_elements = DEFAULT_PAGE_BUFFER_SIZE;
 
-	page_buffer_t* new_buffer = NULL;
+	active_page_table_t* new_buffer = NULL;
 
-	new_buffer = (page_buffer_t*)ZeroedEpochMallocNoAlign(sizeof(page_buffer_t)); //zeroed allocation
+	new_buffer = (active_page_table_t*)ZeroedEpochMallocNoAlign(sizeof(active_page_table_t)); //zeroed allocation
 	//assume this is persisted in the allocator ???
 	new_buffer->page_size = PAGE_SIZE;
 	new_buffer->current_size = 0;
@@ -29,12 +29,12 @@ page_buffer_t* create_page_buffer() {
 	unsigned num_entries = (num_elements -1) / (WORDS_PER_CACHE_LINE - 1) + 1;
 
 	unsigned i;
-	page_buffer_entry_t* new_entry = NULL;
-	page_buffer_entry_t* prev = NULL;
+	active_page_table_entry_t* new_entry = NULL;
+	active_page_table_entry_t* prev = NULL;
 	
 
 	for (i = 0; i < num_entries; i++) {
-		new_entry = (page_buffer_entry_t*)ZeroedEpochMallocNoAlign(sizeof(page_buffer_entry_t)); //zeroed alloc
+		new_entry = (active_page_table_entry_t*)ZeroedEpochMallocNoAlign(sizeof(active_page_table_entry_t)); //zeroed alloc
 		write_data_nowait(new_entry, 2);
 		if (i == 0) {
 			new_buffer->pages = new_entry;
@@ -57,19 +57,19 @@ page_buffer_t* create_page_buffer() {
 /*
 	frees all the memory associated with a page buffer
 */
-void destroy_page_buffer(page_buffer_t* page_buffer) {
+void destroy_active_page_table(active_page_table_t* active_page_table) {
 	
-	page_buffer_entry_t* current;
-	page_buffer_entry_t* next;
+	active_page_table_entry_t* current;
+	active_page_table_entry_t* next;
 
-	current = page_buffer->pages;
+	current = active_page_table->pages;
 	while (current != NULL) {
 		next = current->next;
 		EpochFreeNoAlign(current);
 		current = next;
 	}
 	
-	EpochFreeNoAlign(page_buffer);
+	EpochFreeNoAlign(active_page_table);
 
 	//TODO make this pmem aware? what if there's a crash while I'm destroying the buffer (although the buffer should exists for the lifetime of a thread accessing the data structure)
 }
@@ -77,8 +77,8 @@ void destroy_page_buffer(page_buffer_t* page_buffer) {
 /*
 	clears all the entries in the buffer;
 */
-void clear_buffer(page_buffer_t* buffer, EpochTsVal cleanTs, EpochTsVal currTs) {
-	page_buffer_entry_t* current = buffer->pages;
+void clear_buffer(active_page_table_t* buffer, EpochTsVal cleanTs, EpochTsVal currTs) {
+	active_page_table_entry_t* current = buffer->pages;
 
 #ifdef BUFFERING_ON
 	if (buffer->shared_flush_buffer != NULL) {
@@ -108,7 +108,7 @@ void clear_buffer(page_buffer_t* buffer, EpochTsVal cleanTs, EpochTsVal currTs) 
 	mark a page as having data that was either allocated or freed in the current epoch
 */
 
-void mark_page(page_buffer_t* pages, void* ptr,  int allocation_size, EpochTsVal currentTs, EpochTsVal collectTs, int isRemove) {
+void mark_page(active_page_table_t* pages, void* ptr,  int allocation_size, EpochTsVal currentTs, EpochTsVal collectTs, int isRemove) {
 
 #ifdef DO_STATS
 	pages->num_marks++;
@@ -128,8 +128,8 @@ void mark_page(page_buffer_t* pages, void* ptr,  int allocation_size, EpochTsVal
 
 	int i;
 
-	page_buffer_entry_t* current = pages->pages;
-	page_buffer_entry_t* prev = NULL;
+	active_page_table_entry_t* current = pages->pages;
+	active_page_table_entry_t* prev = NULL;
 
 	page_descriptor_t* first_empty = NULL;
 
@@ -184,7 +184,7 @@ void mark_page(page_buffer_t* pages, void* ptr,  int allocation_size, EpochTsVal
 
 	// page has not been found, and no empty entry in the buffer, that means we need to create a new entry and link it
 
-	page_buffer_entry_t* new_entry = (page_buffer_entry_t*) ZeroedEpochMallocNoAlign(sizeof(page_buffer_entry_t));
+	active_page_table_entry_t* new_entry = (active_page_table_entry_t*) ZeroedEpochMallocNoAlign(sizeof(active_page_table_entry_t));
 	// the new entry is assumed to be zeroed - works right now
 	// the new is also assumed to be persisted
 

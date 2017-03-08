@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef _ACTIVE_PAGE_TABLE_H_
+#define _ACTIVE_PAGE_TABLE_H_
 
 #define DEFAULT_PAGE_BUFFER_SIZE 32
 #define CLEAN_THRESHOLD 16
@@ -22,18 +22,18 @@ typedef struct page_descriptor_t {
 }page_descriptor_t;
 
 //an entry should take two cache lines
-typedef struct page_buffer_entry_t{
+typedef struct active_page_table_entry_t{
 	page_descriptor_t pages[WORDS_PER_CACHE_LINE-1];
-	page_buffer_entry_t* next;
+	active_page_table_entry_t* next;
 	BYTE padding[8];
-} page_buffer_entry_t;
+} active_page_table_entry_t;
 
 
-typedef struct page_buffer_t {
+typedef struct active_page_table_t {
 	unsigned page_size; //TODO what if I want to add a larger page?
 	unsigned current_size;
 	BYTE clear_all; // if flag set, I must clear the page buffer before accessing it again
-	page_buffer_entry_t* pages; // pages from which frees and allocs just happened
+	active_page_table_entry_t* pages; // pages from which frees and allocs just happened
 #ifdef BUFFERING_ON
 	flushbuffer_t* shared_flush_buffer;
 #endif
@@ -41,7 +41,7 @@ typedef struct page_buffer_t {
 	UINT64 num_marks;
 	UINT64 hits;
 #endif
-} page_buffer_t;
+} active_page_table_t;
 
 
 //given an address, get the start memory location of the page it belongs to
@@ -50,13 +50,15 @@ inline void* get_page_start_address(void* address) {
 }
 
 //allocate a oage buffer already containing space for a predefined number of elements
-page_buffer_t* create_page_buffer();
+active_page_table_t* create_active_page_table();
 
 //deallocate the bage buffer and entries
-void destroy_page_buffer(page_buffer_t* to_delete);
+void destroy_active_page_table(active_page_table_t* to_delete);
 
 //if a page is not present, add it to the buffer and persist the addition
-void mark_page(page_buffer_t* pages, void* ptr, int allocation_size, EpochTsVal currentTs, EpochTsVal collectTs, int isRemove);
+void mark_page(active_page_table_t* pages, void* ptr, int allocation_size, EpochTsVal currentTs, EpochTsVal collectTs, int isRemove);
 
 //clear all the pages in the buffer
-void clear_buffer(page_buffer_t* buffer, EpochTsVal cleanTs, EpochTsVal currTs);
+void clear_buffer(active_page_table_t* buffer, EpochTsVal cleanTs, EpochTsVal currTs);
+
+#endif

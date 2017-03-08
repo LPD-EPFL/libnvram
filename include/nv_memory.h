@@ -12,11 +12,6 @@
 
 /* contains functions for working with non-volatile memory */
 
-#ifndef CACHE_LINE_SIZE
-#define CACHE_LINE_SIZE 64
-#endif
-
-#define CACHE_ALIGNED __attribute__ ((aligned(CACHE_LINE_SIZE)))
 
 // TODO add operations to do moves from volatile memory to persistent memeory addresses using non-temporal stores
 // for examples, see https://github.com/pmem/nvml/blob/master/src/libpmem/pmem.c

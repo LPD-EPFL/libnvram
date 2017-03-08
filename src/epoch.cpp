@@ -73,12 +73,12 @@ void EpochSetFlushBuffer(flushbuffer_t* buffer_ptr) {
 
 void* GetOpaquePageBuffer(EpochThread opaqueEpoch) {
 	EpochThreadData *epoch = (EpochThreadData *)opaqueEpoch;
-	return (void*)epoch->page_buffer;
+	return (void*)epoch->active_page_table;
 }
 
 void SetOpaquePageBuffer(EpochThread opaqueEpoch, void* pb) {
 	EpochThreadData *epoch = (EpochThreadData *)opaqueEpoch;
-	epoch->page_buffer = (page_buffer_t*) pb;
+	epoch->active_page_table = (active_page_table_t*) pb;
 }
 
 

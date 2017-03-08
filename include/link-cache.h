@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _LINK_CACHE_H_
+#define _LINK_CACHE_H_
 
 #include <malloc.h>
 #include <immintrin.h>
@@ -138,4 +139,4 @@ static inline int is_marked_ptr_cache(UINT_PTR p) {
 	return (int)(p & (UINT_PTR)0x02);
 }
 
-
+#endif
