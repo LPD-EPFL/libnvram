@@ -1,5 +1,4 @@
 #include "epoch_impl.h"
-
 /*
 	creates a page buffer with a certain number of preallocated free entries
 */
@@ -52,7 +51,6 @@ active_page_table_t* create_active_page_table() {
 	wait_writes();
 	return new_buffer;
 }
-
 
 /*
 	frees all the memory associated with a page buffer
