@@ -1,10 +1,27 @@
 #ifndef _ACTIVE_PAGE_TABLE_H_
 #define _ACTIVE_PAGE_TABLE_H_
 
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <stddef.h>
+#include <libpmem.h>
+#include <libpmemobj.h>
+
+#define APT_POOL_SIZE    (1 * 1024 * 1024) /* 1 MB */
+
+
+static PMEMobjpool *pop;
+
+#define LAYOUT_NAME "apt"
+
 #define DEFAULT_PAGE_BUFFER_SIZE 32
 #define CLEAN_THRESHOLD 16
 
-#define WORDS_PER_CACHE_LINE 8
+//#define WORDS_PER_CACHE_LINE 8
 #define PAGE_SIZE  65536//could have larger granularity pages as well - that would reduce the number of page numbers we need to store
 
 
@@ -14,6 +31,7 @@
 	we assume such a buffer for each individual thread
 */
 
+#define MAX_NUM_PAGES 8192
 
 typedef struct page_descriptor_t {
 	void* page;
@@ -21,19 +39,11 @@ typedef struct page_descriptor_t {
 	EpochTsVal lastTsIns;
 }page_descriptor_t;
 
-//an entry should take two cache lines
-typedef struct active_page_table_entry_t{
-	page_descriptor_t pages[WORDS_PER_CACHE_LINE-1];
-	active_page_table_entry_t* next;
-	BYTE padding[8];
-} active_page_table_entry_t;
-
-
 typedef struct active_page_table_t {
-	unsigned page_size; //TODO what if I want to add a larger page?
-	unsigned current_size;
+	size_t page_size; //TODO what if I want to add a larger page?
+	size_t current_size;
+    size_t last_in_use;
 	BYTE clear_all; // if flag set, I must clear the page buffer before accessing it again
-	active_page_table_entry_t* pages; // pages from which frees and allocs just happened
 #ifdef BUFFERING_ON
 	flushbuffer_t* shared_flush_buffer;
 #endif
@@ -41,8 +51,13 @@ typedef struct active_page_table_t {
 	UINT64 num_marks;
 	UINT64 hits;
 #endif
+	page_descriptor_t pages[MAX_NUM_PAGES]; // pages from which frees and allocs just happened
 } active_page_table_t;
 
+
+POBJ_LAYOUT_BEGIN(apt);
+POBJ_LAYOUT_ROOT(apt, active_page_table_t);
+POBJ_LAYOUT_END(apt);
 
 //given an address, get the start memory location of the page it belongs to
 inline void* get_page_start_address(void* address) {
