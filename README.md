@@ -1,3 +1,5 @@
+Library not yet completely ported to Linux!
+
 Dependecies:
 
 * nv-jemalloc (https://github.com/LPD-EPFL/nv-jemalloc) 
