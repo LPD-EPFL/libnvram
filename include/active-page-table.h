@@ -45,7 +45,7 @@ typedef struct active_page_table_t {
     size_t last_in_use;
 	BYTE clear_all; // if flag set, I must clear the page buffer before accessing it again
 #ifdef BUFFERING_ON
-	flushbuffer_t* shared_flush_buffer;
+	linkcache_t* shared_flush_buffer;
 #endif
 #ifdef DO_STATS
 	UINT64 num_marks;
