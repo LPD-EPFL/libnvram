@@ -9,12 +9,16 @@
 #include <sys/types.h>
 #include <stddef.h>
 #include <libpmem.h>
+#include <assert.h>
 #include <libpmemobj.h>
+
+#include "nv_memory.h"
+#include "epochalloc.h"
+#include "utils.h"
+#include "epoch_common.h"
 
 #define APT_POOL_SIZE    (1 * 1024 * 1024) /* 1 MB */
 
-
-static PMEMobjpool *pop;
 
 #define LAYOUT_NAME "apt"
 

@@ -28,7 +28,11 @@ extern "C" {
 
 #include <stdint.h>
 
+typedef uint8_t BYTE;
+typedef uint8_t UINT8;
+typedef unsigned long ULONG;
 typedef uint16_t UINT16;
+typedef unsigned int UINT;
 typedef uint32_t UINT32;
 typedef uint64_t UINT64;
 typedef uint64_t ULONG64;;

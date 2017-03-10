@@ -1,6 +1,9 @@
 #ifndef _EPOCHALLOC_H_
 #define _EPOCHALLOC_H_
 
+#include <stdlib.h>
+#include <jemalloc/jemalloc.h>
+
 /*
  *  Volatile memory allocations
  */

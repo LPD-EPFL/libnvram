@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <intrin.h>
+//#include <intrin.h>
 #include <cassert>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -18,14 +18,12 @@
 
 #include "utils.h"
 #include "nv_memory.h"
-#include "link-cache.h.h"
+#include "link-cache.h"
 
-#include "epochcommon.h"
+#include "epoch_common.h"
 #include "epochalloc.h"
-
 #include "epochstats.h"
 #include "epoch.h"
-
 #include "active-page-table.h"
 
 #endif

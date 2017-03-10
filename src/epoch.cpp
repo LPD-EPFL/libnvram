@@ -8,9 +8,6 @@ static union {
 
 
 
-SMP_HEAP epoch_heap;
-NV_SMP_HEAP node_heap; //use this heap to allocate nodes for lock-free data structures
-
 // Epoch stats names.
 const char *EpochStatsEnum::Names[] = {
 	"NewGenerationsAdded",
@@ -32,13 +29,13 @@ void EpochGlobalInit() {
 	link_flush_buffer = NULL;
 }
 
-void EpochGlobalInit(flushbuffer_t* buffer_ptr) {
+void EpochGlobalInit(linkcache_t* buffer_ptr) {
 	EpochThreadList.head = NULL;
 	link_flush_buffer = buffer_ptr;
 }
 
 
-void EpochSetFlushBuffer(flushbuffer_t* buffer_ptr) {
+void EpochSetFlushBuffer(linkcache_t* buffer_ptr) {
 	link_flush_buffer = buffer_ptr;
 }
 
@@ -323,7 +320,7 @@ static void FreeUsedGenerations(
 // 1. Collect the timestamp, using the buffer in the epoch.
 // 2. Traverse epochs and free all that are dominated by the
 //    timestamp collected in step 1.
-static void FreeUsedGenerations(EpochThreadData *epoch) {
+void FreeUsedGenerations(EpochThreadData *epoch) {
 	CollectTimestampVector(epoch, &epoch->vectorTsBuf);
 	FreeUsedGenerations(epoch, &epoch->vectorTsBuf);
 }
@@ -366,7 +363,7 @@ void EpochChangeGeneration(EpochThreadData *epoch) {
 	// 3. See if we can free something from used generations.
 #ifdef BUFFERING_ON
 	//fprintf(stderr, "chaning generations\n");
-	buffer_flush_all_buckets(link_flush_buffer);
+	cache_wb_all_buckets(link_flush_buffer);
 #endif
 	FreeUsedGenerations(epoch, currentVectorTs);
 

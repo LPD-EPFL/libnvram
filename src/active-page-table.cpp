@@ -1,9 +1,12 @@
-#include "epoch_impl.h"
+//#include "epoch_impl.h"
 
+#include "active-page-table.h"
+
+static PMEMobjpool *pop;
 
 active_page_table_t* allocate_apt() {
 
-    uint64_t tid = gettid();
+    uint64_t tid = (uint64_t)syscall(224); //TODO replace this with something else; nasty solution to get a thread id
 
 	char path[32];
     sprintf(path, "%lu", tid); //thread id as file name
@@ -81,11 +84,11 @@ void clear_buffer(active_page_table_t* buffer, EpochTsVal cleanTs, EpochTsVal cu
 
     for (i = 0; i < buffer->last_in_use; i++) {
         if ((buffer->pages[i].page!=NULL) && ((buffer->pages[i].lastTsAccess < cleanTs) || (buffer->pages[i].lastTsAccess ==0)) && ((buffer->pages[i].lastTsIns < currTs) || (buffer->pages[i].lastTsIns == 0))) {
-            current->pages[i].page = NULL;
-            current->pages[i].lastTsAccess = EPOCH_FIRST_EPOCH;
+            buffer->pages[i].page = NULL;
+            buffer->pages[i].lastTsAccess = EPOCH_FIRST_EPOCH;
             buffer->current_size--;
         }
-        if ((current->pages[i].page != NULL) && (i > max_seen)) {
+        if ((buffer->pages[i].page != NULL) && (i > max_seen)) {
             max_seen = i;
         }   
     }
@@ -178,24 +181,24 @@ void mark_page(active_page_table_t* pages, void* ptr,  int allocation_size, Epoc
         return;
     }
 
-    size_t old = page->last_in_use;
+    size_t old = pages->last_in_use;
 
     pages->last_in_use = twice;
     write_data_wait(pages,1); //need to make sure this is persisted before writing after the marker
 
-    assert(pages->page[old].page == NULL); //we just expanded; this means the newly enabled page entries should be null
+    assert(pages->pages[old].page == NULL); //we just expanded; this means the newly enabled page entries should be null
 
-	pages->page[old].page = page;
+	pages->pages[old].page = page;
 	if (isRemove) {
-		pages->page[old].lastTsAccess = currentTs;
-		pages->page[old].lastTsIns = 0;
+		pages->pages[old].lastTsAccess = currentTs;
+		pages->pages[old].lastTsIns = 0;
 	}
 	else {
-		pages->page[old].lastTsAccess = 0;
-		pages->page[old].lastTsIns = currentTs;
+		pages->pages[old].lastTsAccess = 0;
+		pages->pages[old].lastTsIns = currentTs;
 	}
 
-	write_data_nowait(&(pages->page[old]), 1);
+	write_data_nowait(&(pages->pages[old]), 1);
 
 	wait_writes();
 

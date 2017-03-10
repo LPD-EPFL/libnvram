@@ -31,7 +31,7 @@ inline void EpochStats::Init() {
 	memset(stats, 0, sizeof(stats));
 }
 
-inline static void EpochStats::Increment(
+inline void EpochStats::Increment(
 		EpochStatsEnum::Key key,
 		UINT64 inc) {
 #ifdef EPOCH_KEEP_STATS
@@ -41,7 +41,7 @@ inline static void EpochStats::Increment(
 
 static const char *EPOCH_TAB_STRING = "    ";
 
-inline static void EpochPrintIndent(ULONG indent) {
+inline void EpochPrintIndent(ULONG indent) {
 	for(ULONG i = 0;i < indent;i++) {
 		printf("%s", EPOCH_TAB_STRING);
 	}
