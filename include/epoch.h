@@ -1,9 +1,9 @@
 #ifndef _EPOCH_H_
 #define _EPOCH_H_
 
-#include "epoch_impl.h"
-#include "epoch_common.h"
-#include "active-page-table.h"
+#include "libnvram.h"
+//#include "epoch_common.h"
+//#include "active-page-table.h"
 
 
 // opaque type to store epoch data

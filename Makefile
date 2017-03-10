@@ -48,7 +48,6 @@ default: link-cache_test
 
 ifeq ($(MEASUREMENTS),1)
 VER_FLAGS += -DDO_PROFILE
-#MEASUREMENTS_FILES += measurements.o
 endif
 
 link-cache.o: $(SRC)/link-cache.c $(INCLUDE)/link-cache.h $(INCLUDE)/nv_memory.h $(INCLUDE)/utils.h
@@ -57,15 +56,16 @@ link-cache.o: $(SRC)/link-cache.c $(INCLUDE)/link-cache.h $(INCLUDE)/nv_memory.h
 active-page-table.o: $(SRC)/active-page-table.cpp $(INCLUDE)/link-cache.h $(INCLUDE)/nv_memory.h $(INCLUDE)/utils.h $(INCLUDE)/active-page-table.h $(INCLUDE)/epoch_common.h
 	$(CC) $(VER_FLAGS) -c $(SRC)/active-page-table.cpp $(CFLAGS) -I./$(INCLUDE) -I${NVML_PATH}/include -L${NVML_PATH}/lib -I${JEMALLOC_PATH}/include -L${JEMALLOC_PATH}/lib -Wl,-rpath,${JEMALLOC_PATH}/lib -ljemalloc -lpmemobj -lpmem
 
-
-epoch.o: $(SRC)/epoch.cpp $(INCLUDE)/link-cache.h $(INCLUDE)/nv_memory.h $(INCLUDE)/utils.h $(INCLUDE)/active-page-table.h $(INCLUDE)/epoch_common.h $(INCLUDE)/epoch.h $(INCLUDE)/epochstats.h  $(INCLUDE)/epoch_impl.h
+epoch.o: $(SRC)/epoch.cpp $(INCLUDE)/link-cache.h $(INCLUDE)/nv_memory.h $(INCLUDE)/utils.h $(INCLUDE)/active-page-table.h $(INCLUDE)/epoch_common.h $(INCLUDE)/epoch.h $(INCLUDE)/epochstats.h  $(INCLUDE)/libnvram.h
 	$(CC) $(VER_FLAGS) -c $(SRC)/epoch.cpp $(CFLAGS) -I./$(INCLUDE) -I${NVML_PATH}/include -L${NVML_PATH}/lib -I${JEMALLOC_PATH}/include -L${JEMALLOC_PATH}/lib -Wl,-rpath,${JEMALLOC_PATH}/lib -ljemalloc -lpmemobj -lpmem
 
 link-cache_test: link-cache.o $(SRC)/link-cache_test.c $(INCLUDE)/random.h
 	$(CC) $(VER_FLAGS) $(SRC)/link-cache_test.c link-cache.o $(CFLAGS) $(LDFLAGS) -I./$(INCLUDE) -L./ -o link-cache_test
 
-#epoch.o: $(SRC)/active-page-table.cpp $(SRC)/epoch.cpp $(SRC)/ $(INCLUDE)/active-page-table.h $(INCLUDE)/nv_memory.h $(INCLUDE)/utils.h $(INCLUDE)/epoch.h $(INCLUDE)/epochalloc.h $(INCLUDE)/epoch_impl.h $(INCLUDE)/epoch_pmem.h
-	#$(CC) $(VER_FLAGS) -c $(SRC)/link-cache.c $(CFLAGS) -I./$(INCLUDE)
+libnvram.a: link-cache.o active-page-table.o epoch.o $(INCLUDE)/link-cache.h $(INCLUDE)/nv_memory.h $(INCLUDE)/utils.h $(INCLUDE)/active-page-table.h $(INCLUDE)/epoch_common.h $(INCLUDE)/epoch.h $(INCLUDE)/epochstats.h  $(INCLUDE)/libnvram.h
+	@echo Archive name = libnvram.a
+	ar -r libnvram.a link-cache.o active-page-table.o epoch.o
+	rm -f *.o
 
 clean:
 	rm -f *.o *.a link-cache_test

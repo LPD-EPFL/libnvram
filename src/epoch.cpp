@@ -1,4 +1,4 @@
-#include "epoch_impl.h"
+#include "libnvram.h"
 
 // Linked epoch threads.
 static union {
