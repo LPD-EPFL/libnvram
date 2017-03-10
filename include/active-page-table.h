@@ -13,6 +13,7 @@
 #include <libpmemobj.h>
 
 #include "nv_memory.h"
+#include "link-cache.h"
 #include "epochalloc.h"
 #include "utils.h"
 #include "epoch_common.h"

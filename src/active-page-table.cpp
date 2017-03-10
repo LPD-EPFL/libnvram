@@ -75,7 +75,7 @@ void clear_buffer(active_page_table_t* buffer, EpochTsVal cleanTs, EpochTsVal cu
 #ifdef BUFFERING_ON
 	if (buffer->shared_flush_buffer != NULL) {
 		//fprintf(stderr, "clearing page buffer\n");
-		buffer_flush_all_buckets(buffer->shared_flush_buffer);
+		cache_wb_all_buckets(buffer->shared_flush_buffer);
 	}
 #endif
 

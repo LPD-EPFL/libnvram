@@ -1,10 +1,23 @@
 #ifndef _EPOCH_H_
 #define _EPOCH_H_
 
-#include "libnvram.h"
-//#include "epoch_common.h"
-//#include "active-page-table.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <assert.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <stddef.h>
+#include <libpmem.h>
+#include <libpmemobj.h>
 
+#include "utils.h"
+#include "nv_memory.h"
+#include "link-cache.h"
+#include "epoch_common.h"
+#include "active-page-table.h"
+#include "epochalloc.h"
+#include "epochstats.h"
 
 // opaque type to store epoch data
 typedef void *EpochThread;

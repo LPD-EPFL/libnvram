@@ -3,6 +3,11 @@
 
 #include "utils.h"
 
+
+#define BUFFERING_ON 1
+//#define SIMULATE_NAIVE_IMPLEMENTATION 1
+//#define ESTIMATE_RECOVERY 1
+
 // Use 64 bit timestamps.
 // This could lead to high space requirements just for storing the
 // timestamps, as we will need one of these for each thread in the
