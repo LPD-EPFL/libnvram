@@ -1,17 +1,16 @@
 #ifndef _EPOCHALLOC_H_
 #define _EPOCHALLOC_H_
 
-/*TODO these two functions should use a fully-functional non-volatile memory allocator */
-#define nvalloc malloc
-#define nvalloc_zero(sz) calloc(1, sz)
+/*
+ *  Volatile memory allocations
+ */
 
 // Allocate block of memory that is aligned to a given boundary.
 // Boundary has to be equal to some power of two.
 template<size_t BOUNDARY>
 void *EpochMallocAligned(size_t size) {
 	size_t actualSize = size + BOUNDARY + sizeof(void *);
-	//UINT_PTR memBlock = (UINT_PTR)malloc(actualSize);
-	UINT_PTR memBlock = (UINT_PTR)nvalloc(actualSize);
+    UINT_PTR memBlock = (UINT_PTR)malloc(actualSize);
 	UINT_PTR ret = ((memBlock + sizeof(void *) + BOUNDARY)
 		& ~(BOUNDARY - 1));
 	void **backPtr = (void **)(ret - sizeof(void *));
@@ -22,23 +21,21 @@ void *EpochMallocAligned(size_t size) {
 
 inline void EpochFreeAligned(void *ptr) {
 	void **backPtr = (void **)((UINT_PTR)ptr - sizeof(void *));
-	//free(*backPtr);
-	nvfree(*backPtr);
+	free(*backPtr);
 }
 
 
 inline void *ZeroedEpochMallocNoAlign(size_t size) {
-	return nvalloc_zero(size);
+	return calloc(1,size);
 }
 
 inline void *EpochMallocNoAlign(size_t size) {
-	return nvalloc(size);
+	return malloc(size);
 }
 
 
 inline void EpochFreeNoAlign(void *ptr) {
-
-	nvfree(ptr);
+	free(ptr);
 }
 
 
@@ -60,28 +57,33 @@ inline void EpochCacheAlignedFree(void *ptr) {
 	return EpochFreeAligned(ptr);
 }
 
+/*
+ *  Data structure node specific functions
+ */
+
 // nodes larger than one cache line are naturally alligned to cache line boundaries in Rockall
 inline void *AllocNode(size_t size) {
-	return mallocx(size,0);
+	return nv_mallocx(size,0);
 }
 
 inline void* GetNextNodeAddress(size_t size) {
-	return nextx(size,0);
+	return nv_nextx(size,0);
 }
 
 inline void FreeNode(void *ptr) {
-	dallocx(ptr,0);
+	nv_dallocx(ptr,0);
 }
 
 inline int NodeMemoryIsFree(void *ptr) {
-	if (malloc_usable_size(ptr) != 0) {
+    //TODO: check that this function actually performs as intended
+	if (nv_malloc_usable_size(ptr) != 0) {
 		return 0;
 	}
 	return 1;
 }
 
 inline void MarkNodeMemoryAsFree(void * ptr) {
-	node_heap.Delete(ptr);
+	nv_dallocx(ptr,0);
 }
 
 #endif

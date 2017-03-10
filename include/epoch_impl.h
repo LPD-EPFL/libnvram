@@ -5,17 +5,20 @@
 //#define SIMULATE_NAIVE_IMPLEMENTATION 1
 #define ESTIMATE_RECOVERY 1
 
-#include <intrin.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <intrin.h>
 #include <cassert>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <stddef.h>
+#include <libpmem.h>
+#include <libpmemobj.h>
 
-#include <Interface\SmpHeap.hpp>
-#include <Interface\NVSmpHeap.hpp>
-
-#include <nv-memory\nv_memory.h>
-
-#include <nv-memory\FlushBuffer_one_cl.h>
+#include "utils.h"
+#include "nv_memory.h"
+#include "link-cache.h.h"
 
 #include "epochcommon.h"
 #include "epochalloc.h"

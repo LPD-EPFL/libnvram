@@ -1,32 +1,3 @@
-//*********************************************************************
-//  Copyright (c) Microsoft Corporation.
-//
-// @File: epoch.cpp
-// @Owner: t-alekd
-//
-// Purpose:
-//
-// Epoch based memory management.
-//  
-// Notes:
-//
-//  If we strictly limit the number of EpochNodes lying around unclaimed,
-//  we are in danger of a livelock. If two threads deallocate large
-//  amount of data (larger than the limit we impose) in a single memory
-//  operation, they would deadlock as neither of them will be able to
-//  free any of the used generations because of the other and will keep
-//  spinning.
-//
-//  For this reason, the generations are implemented as a linked list
-//  of all generations and we can new ones when needed. We just try a
-//  bit harder to free memory when there is too much of it lying around.
-//  At the moment, the extra generations are not deallocated, but this
-//  could be done instead of linking them back into the list of free
-//  generations.
-//
-// @EndHeader@
-//*********************************************************************
-
 #include "epoch_impl.h"
 
 // Linked epoch threads.
@@ -120,10 +91,10 @@ EpochThread EpochThreadInit() {
 		}
 
 		// we are at the current end of the list
-		curr = (EpochThreadData *)InterlockedCompareExchangePointer(
+		curr = (EpochThreadData *)CAS_PTR(
 				(volatile PVOID *)prev,
-				epoch,
-				NULL);
+				NULL,
+				epoch);
 
 		// if CAS was successful we are done
 		if(curr == NULL) {

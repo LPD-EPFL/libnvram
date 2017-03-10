@@ -31,7 +31,7 @@ inline void EpochStats::Init() {
 	memset(stats, 0, sizeof(stats));
 }
 
-__forceinline void EpochStats::Increment(
+inline static void EpochStats::Increment(
 		EpochStatsEnum::Key key,
 		UINT64 inc) {
 #ifdef EPOCH_KEEP_STATS
