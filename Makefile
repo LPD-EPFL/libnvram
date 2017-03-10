@@ -17,6 +17,10 @@ ifndef PC_NAME
 	PC_NAME = $(shell uname -n)
 endif
 
+ifndef DESTDIR
+	DESTDIR = $(HOME)/local
+endif
+
 ifeq ($(PC_NAME), lpdquad)
     CFLAGS += -DTSX_ENABLED
     CFLAGS += -mrtm
@@ -75,3 +79,8 @@ libnvram_test: libnvram.a libnvram_test.o
 
 clean:
 	rm -f *.o *.a link-cache_test
+
+install: libnvram.a
+	cp libnvram.a $(DESTDIR)/lib
+	mkdir -p $(DESTDIR)/include/libnvram
+	cp $(INCLUDE)/*.h $(DESTDIR)/include
