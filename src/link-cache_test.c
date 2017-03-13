@@ -109,8 +109,8 @@ void* test(void* thread) {
   while (stop == 0) {
 	  uint64_t next = (my_random(&(seeds[0]), &(seeds[1]), &(seeds[2])) % rand_max);
       void* old = data[next];
-      void* new = (void*)((uintptr_t) (ID+1));
-      cache_try_link_and_add(lc, next, (volatile void**) &(data[next]), old, new);
+      void* new_1 = (void*)((uintptr_t) (ID+1));
+      cache_try_link_and_add(lc, next, (volatile void**) &(data[next]), old, new_1);
   }
 
   barrier_cross(&barrier);
