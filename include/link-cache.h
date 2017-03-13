@@ -4,7 +4,7 @@
 #include <malloc.h>
 #include <immintrin.h>
 
-#include "utils.h"
+#include "nv_utils.h"
 #include "nv_memory.h"
 
 /* this is basically a hash table that should be kept in

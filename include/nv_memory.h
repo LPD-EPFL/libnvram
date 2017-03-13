@@ -1,7 +1,7 @@
 #ifndef _NV_MEMORY_H_
 #define _NV_MEMORY_H_
 
-#include "utils.h" 
+#include "nv_utils.h" 
 
 #define SIMULATE_LATENCIES 1
 

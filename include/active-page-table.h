@@ -15,7 +15,7 @@
 #include "nv_memory.h"
 #include "link-cache.h"
 #include "epochalloc.h"
-#include "utils.h"
+#include "nv_utils.h"
 #include "epoch_common.h"
 
 #define APT_POOL_SIZE    (1 * 1024 * 1024) /* 1 MB */

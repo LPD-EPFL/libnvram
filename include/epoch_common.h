@@ -1,7 +1,7 @@
 #ifndef _EPOCH_COMMON_H_
 #define _EPOCH_COMMON_H_
 
-#include "utils.h"
+#include "nv_utils.h"
 
 
 #define BUFFERING_ON 1

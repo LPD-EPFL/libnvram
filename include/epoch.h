@@ -11,7 +11,7 @@
 #include <libpmem.h>
 #include <libpmemobj.h>
 
-#include "utils.h"
+#include "nv_utils.h"
 #include "nv_memory.h"
 #include "link-cache.h"
 #include "epoch_common.h"

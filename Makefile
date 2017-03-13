@@ -83,4 +83,4 @@ clean:
 install: libnvram.a
 	cp libnvram.a $(DESTDIR)/lib
 	mkdir -p $(DESTDIR)/include/libnvram
-	cp $(INCLUDE)/*.h $(DESTDIR)/include
+	cp $(INCLUDE)/*.h $(DESTDIR)/include/libnvram

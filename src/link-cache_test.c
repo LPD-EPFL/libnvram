@@ -19,7 +19,7 @@
 
 #include "nv_memory.h"
 #include "random.h"
-#include "utils.h"
+#include "nv_utils.h"
 #include "link-cache.h"
 
 /*

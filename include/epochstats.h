@@ -1,5 +1,5 @@
-
-#pragma once
+#ifndef _EPOCHSTATS_H_
+#define _EPOCHSTATS_H_
 
 struct EpochStatsEnum {
 	enum Key {
@@ -61,3 +61,5 @@ inline void EpochStats::Accumulate(EpochStats *result, EpochStats *acc) {
 		result->stats[idx] += acc->stats[idx];
 	}
 }
+
+#endif
