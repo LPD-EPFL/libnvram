@@ -66,10 +66,10 @@ void EpochGlobalShutdown() {
 }
 
 // initialize and cleanup epoch-related thread data
-EpochThread EpochThreadInit() {
+EpochThread EpochThreadInit(UINT32 id) {
 	EpochThreadData *epoch = (EpochThreadData *)EpochCacheAlignedCacheSizeAlloc(
 			sizeof(EpochThreadData));
-	epoch->Init();
+	epoch->Init(id);
 
 	// Now link the new epoch thread at the end of the list. We must make
 	// sure that the positions of epochs in the list are never changed

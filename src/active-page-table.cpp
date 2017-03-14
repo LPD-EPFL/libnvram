@@ -2,26 +2,26 @@
 
 #include "active-page-table.h"
 
-static PMEMobjpool *pop;
+__thread char path[32];
 
-active_page_table_t* allocate_apt() {
+__thread static PMEMobjpool *pop;
 
-    uint64_t tid = (uint64_t)syscall(224); //TODO replace this with something else; nasty solution to get a thread id
+active_page_table_t* allocate_apt(UINT32 id) {
 
-	char path[32];
-    sprintf(path, "%lu", tid); //thread id as file name
+    //char path[32];
+    sprintf(path, "thread_%u", id); //thread id as file name
 
 	pop = NULL;
 
 	if (access(path, F_OK) != 0) {
         if ((pop = pmemobj_create(path, POBJ_LAYOUT_NAME(apt),
             APT_POOL_SIZE, S_IWUSR | S_IRUSR)) == NULL) {
-            printf("failed to create pool1\n");
+            printf("failed to create pool1 wiht name %s\n", path);
             return NULL;
         }
     } else {
         if ((pop = pmemobj_open(path, LAYOUT_NAME)) == NULL) {
-            printf("failed to open pool\n");
+            printf("failed to open pool with name %s\n", path);
             return NULL;
         }
     }
@@ -36,11 +36,11 @@ active_page_table_t* allocate_apt() {
 /*
 	creates a page buffer with a certain number of preallocated free entries
 */
-active_page_table_t* create_active_page_table() {
+active_page_table_t* create_active_page_table(UINT32 id) {
 
 	active_page_table_t* new_buffer = NULL;
 
-	new_buffer = allocate_apt(); //zeroed allocation
+	new_buffer = allocate_apt(id); //zeroed allocation
 
 	new_buffer->page_size = PAGE_SIZE;
 	new_buffer->current_size = 0;
@@ -61,9 +61,9 @@ active_page_table_t* create_active_page_table() {
 */
 void destroy_active_page_table(active_page_table_t* active_page_table) {
 	
-    //TODO: can I free the root object? check that
-
 	pmemobj_close(pop);
+
+    remove(path);
 }
 
 /*

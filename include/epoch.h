@@ -33,7 +33,7 @@ void EpochGlobalShutdown();
 void EpochPrintStats();
 
 // initialize and cleanup epoch-related thread data
-EpochThread EpochThreadInit();
+EpochThread EpochThreadInit(UINT32 id);
 void EpochThreadShutdown(EpochThread epoch);
 
 void EpochUnsafeFinalizeAll(EpochThread epoch);
@@ -145,7 +145,7 @@ struct EpochGeneration
 struct EpochThreadData
 {
 	// Init / Uninit.
-	void Init();
+	void Init(UINT32 id);
 	void Uninit();
 
 	// Free all data that this thread deallocated.
@@ -278,7 +278,7 @@ inline void EpochGeneration::Clean() {
 // EpochThreadData.
 //
 
-inline void EpochThreadData::Init() {
+inline void EpochThreadData::Init(UINT32 id) {
 	// initialize this thread's epoch appropriately
 	ts = EPOCH_FIRST_EPOCH;
 
@@ -321,7 +321,7 @@ inline void EpochThreadData::Init() {
 	stats.Init();
 
 	//init the page buffer
-	active_page_table = create_active_page_table();
+	active_page_table = create_active_page_table(id);
 #ifdef BUFFERING_ON
 	active_page_table->shared_flush_buffer = link_flush_buffer;
 #endif
@@ -342,9 +342,9 @@ inline void EpochThreadData::Uninit() {
 
 	// uninit the used vector buffer
 	vectorTsBuf.Uninit();
-#ifndef ESTIMATE_RECOVERY
+//#ifndef ESTIMATE_RECOVERY
 	destroy_active_page_table(active_page_table);
-#endif
+//#endif
 }
 
 // This is not thread safe and is used during shutdown.

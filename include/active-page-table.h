@@ -18,7 +18,7 @@
 #include "nv_utils.h"
 #include "epoch_common.h"
 
-#define APT_POOL_SIZE    (1 * 1024 * 1024) /* 1 MB */
+#define APT_POOL_SIZE    (10 * 1024 * 1024) /* 1 MB */
 
 
 #define LAYOUT_NAME "apt"
@@ -70,7 +70,7 @@ inline void* get_page_start_address(void* address) {
 }
 
 //allocate a oage buffer already containing space for a predefined number of elements
-active_page_table_t* create_active_page_table();
+active_page_table_t* create_active_page_table(UINT32 id);
 
 //deallocate the bage buffer and entries
 void destroy_active_page_table(active_page_table_t* to_delete);
