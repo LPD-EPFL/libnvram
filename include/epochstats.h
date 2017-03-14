@@ -51,7 +51,7 @@ inline void EpochStats::Print(ULONG indent) {
 	for(ULONG idx = 0;idx < EpochStatsEnum::STATS_COUNT;idx++) {
 		if(stats[idx] != 0) {
 			EpochPrintIndent(indent);
-			printf("%s: %llu\n", EpochStatsEnum::Names[idx], stats[idx]);
+			printf("%s: %lu\n", EpochStatsEnum::Names[idx], stats[idx]);
 		}
 	}
 }

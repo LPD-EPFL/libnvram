@@ -19,7 +19,7 @@ extern __thread unsigned long* seeds;
 static inline uint32_t
 fast_rand() 
 {
-  return ((getticks()&4294967295UL)>>4);
+  return ((nv_getticks()&4294967295UL)>>4);
 }
 
 
@@ -28,9 +28,9 @@ seed_rand()
 {
   unsigned long* seeds;
   seeds = (unsigned long*) memalign(64, 64);
-  seeds[0] = getticks() % 123456789;
-  seeds[1] = getticks() % 362436069;
-  seeds[2] = getticks() % 521288629;
+  seeds[0] = nv_getticks() % 123456789;
+  seeds[1] = nv_getticks() % 362436069;
+  seeds[2] = nv_getticks() % 521288629;
   return seeds;
 }
 

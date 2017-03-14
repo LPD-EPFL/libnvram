@@ -51,7 +51,7 @@ typedef uint64_t ticks;
 
 #if defined(__i386__)
 static inline ticks 
-getticks(void) 
+nv_getticks(void) 
 {
   ticks ret;
 
@@ -60,7 +60,7 @@ getticks(void)
 }
 #elif defined(__x86_64__)
 static inline ticks
- getticks(void)
+nv_getticks(void)
 {
   unsigned hi, lo;
   __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
@@ -68,7 +68,7 @@ static inline ticks
 }
 #elif defined(__sparc__)
 static inline ticks 
-getticks()
+nv_getticks()
 {
   ticks ret = 0;
   __asm__ __volatile__ ("rd %%tick, %0" : "=r" (ret) : "0" (ret)); 
@@ -77,7 +77,7 @@ getticks()
 #elif defined(__tile__)
 #  include <arch/cycle.h>
 static inline ticks
-getticks()
+nv_getticks()
 {
   return get_cycle_count();
 }

@@ -57,12 +57,12 @@ static inline void write_data_wait(void* addr, size_t sz) {
 
 static inline void wait_writes() {
 #ifdef SIMULATE_LATENCIES
-	ULONG64 startCycles = getticks();
+	ULONG64 startCycles = nv_getticks();
 	ULONG64 endCycles = startCycles + WAIT_WRITES_DELAY;
 	ULONG64 cycles = startCycles;
 
 	while (cycles < endCycles) {
-		cycles = getticks();
+		cycles = nv_getticks();
 	}
 	_mm_sfence();
 #else
@@ -73,12 +73,12 @@ static inline void wait_writes() {
 //size is in terms of number of cache lines
 static inline void write_data_wait(void* addr, size_t sz) {
 #ifdef SIMULATE_LATENCIES
-	ULONG64 startCycles =getticks();
+	ULONG64 startCycles =nv_getticks();
 	ULONG64 endCycles = startCycles + WRITE_DATA_WAIT_DELAY;
 	ULONG64 cycles = startCycles;
 
 	while (cycles < endCycles) {
-		cycles = getticks();
+		cycles = nv_getticks();
 	}
 	_mm_sfence();
 #else
@@ -99,12 +99,12 @@ static inline void write_data_nowait(void* addr, size_t sz) {
 		_mm_pause();
 	}
 	else {
-		ULONG64 startCycles = getticks();
+		ULONG64 startCycles = nv_getticks();
 		ULONG64 endCycles = startCycles + WRITE_DATA_NOWAIT_DELAY;
 		ULONG64 cycles = startCycles;
 
 		while (cycles < endCycles) {
-			cycles = getticks();
+			cycles = nv_getticks();
 		}
 	}
 #else
