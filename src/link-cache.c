@@ -126,6 +126,14 @@ int bucket_wb(linkcache_t* cache, int bucket_num) {
 
 
 int cache_try_link_and_add(linkcache_t* cache, UINT64 key, volatile void** target, volatile void* oldvalue, volatile void* value) {
+
+	/*if (CAS_PTR((volatile PVOID*)target, (PVOID) oldvalue, (PVOID)mark_ptr_cache((UINT_PTR)value)) != oldvalue) {*/
+        /*return 0;*/
+    /*}*/
+    /*write_data_wait(target, 1);*/
+
+	/*UNUSED PVOID dummy2 = CAS_PTR((volatile PVOID*)target,(PVOID)mark_ptr_cache((UINT_PTR) value), (PVOID) value);*/
+    /*return 1;*/
 	
 	unsigned bucket_num = get_bucket(key);
 	UINT16 hash = get_hash(key);
@@ -242,6 +250,7 @@ int cache_scan(linkcache_t* cache, UINT64 key) {
 			else if ((is_pending(to_search->header.local_flags, i)) && (is_marked_ptr_cache((UINT_PTR)*(void**)(to_search->addresses[i])))){
 				void* val = *(void**)(to_search->addresses[i]);
 				write_data_wait((void*)unmark_ptr_cache((UINT_PTR)val), 1);
+                return 1;
 			}
 		}
 	}
