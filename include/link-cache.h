@@ -129,14 +129,14 @@ static inline int no_free_index(UINT16 bmap) {
 }
 
 static inline UINT_PTR mark_ptr_cache(UINT_PTR p) {
-	return (p | (UINT_PTR)0x02);
+	return (p | (UINT_PTR)0x04);
 }
 
 static inline UINT_PTR unmark_ptr_cache(UINT_PTR p) {
-	return(p & ~(UINT_PTR)0x02);
+	return(p & ~(UINT_PTR)0x04);
 }
 static inline int is_marked_ptr_cache(UINT_PTR p) {
-	return (int)(p & (UINT_PTR)0x02);
+	return (int)(p & (UINT_PTR)0x04);
 }
 
 #endif
