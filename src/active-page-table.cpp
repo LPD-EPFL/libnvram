@@ -117,10 +117,10 @@ void mark_page(active_page_table_t* pages, void* ptr,  int allocation_size, Epoc
 #ifdef DO_STATS
 	pages->num_marks++;
 #endif
-	if ((pages->clear_all) || ((pages->current_size > CLEAN_THRESHOLD) && (currentTs - last_cleared > CLEAN_THRESHOLD))) {
+	if ((pages->clear_all) || ((pages->current_size > CLEAN_THRESHOLD) && ((currentTs - pages->last_cleared) > (CLEAN_THRESHOLD*2)))) {
 		//fprintf(stderr, "clear all size before %u curr ts %u collect ts %u\n", pages->current_size, currentTs, collectTs);
 		clear_buffer(pages, collectTs, currentTs);
-        last_cleared = currentTs;
+        pages->last_cleared = currentTs;
 		//fprintf(stderr, "clear all size after %u\n", pages->current_size);
 	}
 
