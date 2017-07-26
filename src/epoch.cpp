@@ -225,9 +225,10 @@ static void MarkCollectedTimestampVector(
 
 	while (curr != NULL) {
 		if ((*vectorTs)[size] > (curr->largestCollectedTs)) {
-			curr->largestCollectedTs = (*vectorTs)[size++];
+			curr->largestCollectedTs = (*vectorTs)[size];
 		}
 		curr = (EpochThreadData *)curr->next;
+        size++;
 	}
 
 	vectorTs->size = size;
