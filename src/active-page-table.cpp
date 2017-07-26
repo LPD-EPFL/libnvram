@@ -48,6 +48,7 @@ active_page_table_t* create_active_page_table(UINT32 id) {
 
 	new_buffer->page_size = PAGE_SIZE;
 	new_buffer->current_size = 0;
+    new_buffer->last_in_use= 0;
 
 #ifdef BUFFERING_ON
 	new_buffer->shared_flush_buffer = NULL;
@@ -116,9 +117,10 @@ void mark_page(active_page_table_t* pages, void* ptr,  int allocation_size, Epoc
 #ifdef DO_STATS
 	pages->num_marks++;
 #endif
-	if ((pages->clear_all) || (pages->current_size > CLEAN_THRESHOLD)) {
+	if ((pages->clear_all) || ((pages->current_size > CLEAN_THRESHOLD) && (currentTs - last_cleared > CLEAN_THRESHOLD))) {
 		//fprintf(stderr, "clear all size before %u curr ts %u collect ts %u\n", pages->current_size, currentTs, collectTs);
 		clear_buffer(pages, collectTs, currentTs);
+        last_cleared = currentTs;
 		//fprintf(stderr, "clear all size after %u\n", pages->current_size);
 	}
 

@@ -48,6 +48,7 @@ typedef struct active_page_table_t {
 	size_t page_size; //TODO what if I want to add a larger page?
 	size_t current_size;
     size_t last_in_use;
+	EpochTsVal last_cleared;
 	BYTE clear_all; // if flag set, I must clear the page buffer before accessing it again
 #ifdef BUFFERING_ON
 	linkcache_t* shared_flush_buffer;
