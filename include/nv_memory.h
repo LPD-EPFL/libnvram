@@ -77,8 +77,10 @@ static inline void write_data_wait(void* addr, size_t sz) {
 	ULONG64 endCycles = startCycles + WRITE_DATA_WAIT_DELAY;
 	ULONG64 cycles = startCycles;
 
+    //fprintf(stderr, "here\n");
 	while (cycles < endCycles) {
 		cycles = nv_getticks();
+        _mm_pause();
 	}
 	_mm_sfence();
 #else

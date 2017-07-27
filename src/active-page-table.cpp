@@ -9,7 +9,7 @@ static __thread PMEMobjpool *pop;
 active_page_table_t* allocate_apt(UINT32 id) {
 
     //char path[32];
-    sprintf(path, "/tmp/thread_%u", id); //thread id as file name
+    sprintf(path, "/home/tadavid/tmp/thread_%u", id); //thread id as file name
 
     //remove file if it exists
     //TODO might want to remove this instruction in the future
@@ -74,7 +74,6 @@ void destroy_active_page_table(active_page_table_t* active_page_table) {
 	clears all the entries in the buffer;
 */
 void clear_buffer(active_page_table_t* buffer, EpochTsVal cleanTs, EpochTsVal currTs) {
-
     size_t max_seen = 0;
 #ifdef BUFFERING_ON
 	if (buffer->shared_flush_buffer != NULL) {
@@ -87,10 +86,15 @@ void clear_buffer(active_page_table_t* buffer, EpochTsVal cleanTs, EpochTsVal cu
 
 
     for (i = 0; i < buffer->last_in_use; i++) {
-        if ((buffer->pages[i].page!=NULL) && ((buffer->pages[i].lastTsAccess < cleanTs) || (buffer->pages[i].lastTsAccess ==0)) && ((buffer->pages[i].lastTsIns < currTs) || (buffer->pages[i].lastTsIns == 0))) {
+        if ((buffer->pages[i].page!=NULL) && ((buffer->pages[i].lastTsAccess < cleanTs) || (buffer->pages[i].lastTsAccess == 0)) && ((buffer->pages[i].lastTsIns < currTs) || (buffer->pages[i].lastTsIns == 0))) {
             buffer->pages[i].page = NULL;
             buffer->pages[i].lastTsAccess = EPOCH_FIRST_EPOCH;
             buffer->current_size--;
+            //fprintf(stderr, "removing entry, current size is %d \n", buffer->current_size);
+        } else {
+            //if (buffer->pages[i].page!=NULL) {
+             ////fprintf(stderr, "%lu %lu %lu %lu\n", buffer->pages[i].lastTsAccess, cleanTs, buffer->pages[i].lastTsIns, currTs);
+            //}
         }
         if ((buffer->pages[i].page != NULL) && (i > max_seen)) {
             max_seen = i;

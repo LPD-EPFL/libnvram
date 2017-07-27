@@ -23,8 +23,8 @@
 
 #define LAYOUT_NAME "apt"
 
-#define DEFAULT_PAGE_BUFFER_SIZE 32
-#define CLEAN_THRESHOLD 16
+#define DEFAULT_PAGE_BUFFER_SIZE 128
+#define CLEAN_THRESHOLD 64
 
 //#define WORDS_PER_CACHE_LINE 8
 #define PAGE_SIZE  65536//could have larger granularity pages as well - that would reduce the number of page numbers we need to store

@@ -386,6 +386,7 @@ inline void EpochEnd(EpochThread opaqueEpoch) {
 
 	// ImpliedAcquireBarrier();
 	epoch->ts++;
+     //fprintf(stderr, "%lu\n");
 	// ImpliedReleaseBarrier();
 }
 
@@ -421,7 +422,7 @@ inline void EpochReclaimObject(
 	epoch->current->usedNodes = usedNodes;
 
 	epoch->stats.Increment(EpochStatsEnum::DEALLOCATION_COUNT);
-
+    //fprintf(stderr, "reclaim, used nodes %d\n", usedNodes);
 	// if current is full, then we need to process generation change
 	if(usedNodes == EPOCH_NODES_IN_GENERATION) {
 		EpochChangeGeneration(epoch);

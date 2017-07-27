@@ -154,6 +154,7 @@ void EpochScan(EpochThread opaqueEpoch) {
 // This should be done when trying to free all memory held by this thread.
 void EpochFlush(EpochThread opaqueEpoch) {
 	EpochThreadData *epoch = (EpochThreadData *)opaqueEpoch;
+    //fprintf(stderr, "epoch flush\n");
 
 	// flush only if there is something to be flushed
 	if(epoch->current->usedNodes != 0) {
@@ -175,7 +176,7 @@ static void CollectTimestampVector(
 	assert(curr != NULL);
 
 	while(curr != NULL) {
-		if(curr == collector) {
+		if(curr == collector) { 
 			// we can set timestamp for the current one to 0 safely
 			// this enables us to immediately reclaim memory, without
 			// waiting for current thread to wait for epoch end
@@ -188,7 +189,8 @@ static void CollectTimestampVector(
 		} else {
 			(*vectorTs)[size++] = curr->ts;
 		}
-
+        
+        //fprintf(stderr, "collect %lu %lu\n", (*vectorTs)[size-1], curr->ts);
 		curr = (EpochThreadData *)curr->next;
 	}
 
@@ -224,11 +226,16 @@ static void MarkCollectedTimestampVector(
 	assert(curr != NULL);
 
 	while (curr != NULL) {
+        //fprintf(stderr, "mark %lu\n",(*vectorTs)[size]);
 		if ((*vectorTs)[size] > (curr->largestCollectedTs)) {
-			curr->largestCollectedTs = (*vectorTs)[size++];
+			curr->largestCollectedTs = (*vectorTs)[size];
+            //fprintf(stderr, "curr->largestCollectedTs\n");
 		}
+        //fprintf(stderr, "%d %lu\n", size, curr->largestCollectedTs);
+        size++;
 		curr = (EpochThreadData *)curr->next;
 	}
+    //fprintf(stderr, "\n");
 
 	vectorTs->size = size;
 }
@@ -275,9 +282,11 @@ static void FreeUsedGenerations(
 	epoch->stats.Increment(EpochStatsEnum::COLLECT_COUNT);
 	bool success =  false;
 
+    //fprintf(stderr, "free used gens\n");
 	while(curr != NULL) {
 		if(IsTimestampVectorDominated(newTs, &curr->vectorTs)) {
 			// free memory and prepare generation for reuse
+            //fprintf(stderr, "free\n");
 			
 			//buffer_flush_all_buckets(link_flush_buffer);
 			curr->FinalizeAll();
@@ -321,7 +330,9 @@ static void FreeUsedGenerations(
 // 2. Traverse epochs and free all that are dominated by the
 //    timestamp collected in step 1.
 void FreeUsedGenerations(EpochThreadData *epoch) {
+    //fprintf(stderr, "free used generatiosn\n");
 	CollectTimestampVector(epoch, &epoch->vectorTsBuf);
+    //fprintf(stderr, "after coll %lu %lu\n", (&epoch->vectorTsBuf)[0], (&epoch->vectorTsBuf[1]));
 	FreeUsedGenerations(epoch, &epoch->vectorTsBuf);
 }
 
@@ -340,9 +351,11 @@ void FreeUsedGenerations(EpochThreadData *epoch) {
 // always true if we have only one thread in the system).
 //
 void EpochChangeGeneration(EpochThreadData *epoch) {
+    //fprintf(stderr, "epoch cahnge ge\n");
 	// 1. Collect the current timestamp.
 	CollectTimestampVector(epoch, &epoch->current->vectorTs);
 	EpochTimestampVector *currentVectorTs = &epoch->current->vectorTs;
+
 
 	// 2. Link the current generation at the end of used generations list.
 	EpochGeneration *curr = epoch->oldestUsed;
@@ -365,6 +378,8 @@ void EpochChangeGeneration(EpochThreadData *epoch) {
 	//fprintf(stderr, "chaning generations\n");
 	cache_wb_all_buckets(link_flush_buffer);
 #endif
+
+    //fprintf(stderr, "after coll %lu %lu\n", (*currentVectorTs)[0], (*currentVectorTs)[1]);
 	FreeUsedGenerations(epoch, currentVectorTs);
 
 	// 4. Make sure there are some free generations for reuse.
