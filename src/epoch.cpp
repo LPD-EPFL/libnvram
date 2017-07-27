@@ -232,8 +232,8 @@ static void MarkCollectedTimestampVector(
             //fprintf(stderr, "curr->largestCollectedTs\n");
 		}
         //fprintf(stderr, "%d %lu\n", size, curr->largestCollectedTs);
-        size++;
 		curr = (EpochThreadData *)curr->next;
+        size++;
 	}
     //fprintf(stderr, "\n");
 
