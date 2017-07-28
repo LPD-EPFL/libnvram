@@ -27,7 +27,7 @@
 #define CLEAN_THRESHOLD 64
 
 //#define WORDS_PER_CACHE_LINE 8
-#define PAGE_SIZE  65536//could have larger granularity pages as well - that would reduce the number of page numbers we need to store
+#define PAGE_SIZE 4096 //could have larger granularity pages as well - that would reduce the number of page numbers we need to store
 
 
 //#define DO_STATS 1

@@ -188,6 +188,7 @@ void mark_page(active_page_table_t* pages, void* ptr,  int allocation_size, Epoc
 
     if (twice >= MAX_NUM_PAGES) {
         fprintf(stderr, "PAGE_BUFFER_SIZE_EXCEEDED!\n");
+        //fprintf(stderr, "%lu %lu\n", currentTs, collectTs);
         return;
     }
 

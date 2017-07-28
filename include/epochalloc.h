@@ -79,10 +79,18 @@ inline void FreeNode(void *ptr) {
 
 inline int NodeMemoryIsFree(void *ptr) {
     //TODO: check that this function actually performs as intended
+    //size_t all = nv_sallocx(ptr,0);
+    //if (all!=0) assert(all==64);
 	if (nv_malloc_usable_size(ptr) != 0) {
+        //assert(all!=0);
 		return 0;
 	}
+    //assert(all==0);
 	return 1;
+}
+
+inline void FlushThread() {
+    nv_mallctl("thread.tcache.flush", NULL, NULL, NULL, 0);
 }
 
 inline void MarkNodeMemoryAsFree(void * ptr) {
