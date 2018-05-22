@@ -9,7 +9,7 @@ static __thread PMEMobjpool *pop;
 active_page_table_t* allocate_apt(UINT32 id) {
 
     //char path[32];
-    sprintf(path, "/home/tadavid/tmp/thread_%u", id); //thread id as file name
+    sprintf(path, "/tmp/thread_%u", id); //thread id as file name
 
     //remove file if it exists
     //TODO might want to remove this instruction in the future

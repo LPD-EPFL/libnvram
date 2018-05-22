@@ -5,7 +5,7 @@
 
 
 #define BUFFERING_ON 1
-//#define SIMULATE_NAIVE_IMPLEMENTATION 1
+// #define SIMULATE_NAIVE_IMPLEMENTATION 1
 //#define ESTIMATE_RECOVERY 1
 
 // Use 64 bit timestamps.
