@@ -303,8 +303,7 @@ static void FreeUsedGenerations(
 			//buffer_flush_all_buckets(link_flush_buffer);
 			curr->FinalizeAll();
 
-
-			//MarkCollectedTimestampVector(epoch, &curr->vectorTs);
+			MarkCollectedTimestampVector(epoch, &curr->vectorTs);
 			curr->Clean();
 
 			// prepare to move the generation in the new list
