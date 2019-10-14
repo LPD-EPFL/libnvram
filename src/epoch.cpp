@@ -225,19 +225,31 @@ static void MarkCollectedTimestampVector(
 
 	assert(curr != NULL);
 
-	while (curr != NULL) {
-        //fprintf(stderr, "mark %lu\n",(*vectorTs)[size]);
-		if ((*vectorTs)[size] > (curr->largestCollectedTs)) {
-			curr->largestCollectedTs = (*vectorTs)[size];
-            //fprintf(stderr, "curr->largestCollectedTs\n");
-		}
-        //fprintf(stderr, "%d %lu\n", size, curr->largestCollectedTs);
-		curr = (EpochThreadData *)curr->next;
+   while (curr != collector) {
+		    curr = (EpochThreadData *)curr->next;
         size++;
-	}
+   }
+
+   if ((*vectorTs)[size] > (curr->largestCollectedTs)) {
+     curr->largestCollectedTs = (*vectorTs)[size];
+     //fprintf(stderr, "curr->largestCollectedTs\n");
+   }
+
+	assert(curr != NULL);
+
+//	while (curr != NULL) {
+        //fprintf(stderr, "mark %lu\n",(*vectorTs)[size]);
+//		if ((*vectorTs)[size] > (curr->largestCollectedTs)) {
+//			curr->largestCollectedTs = (*vectorTs)[size];
+            //fprintf(stderr, "curr->largestCollectedTs\n");
+//		}
+        //fprintf(stderr, "%d %lu\n", size, curr->largestCollectedTs);
+//		curr = (EpochThreadData *)curr->next;
+ //       size++;
+	//}
     //fprintf(stderr, "\n");
 
-	vectorTs->size = size;
+//	vectorTs->size = size;
 }
 
 // Check whether new timestamp dominates old timestamp.
@@ -290,7 +302,9 @@ static void FreeUsedGenerations(
 			
 			//buffer_flush_all_buckets(link_flush_buffer);
 			curr->FinalizeAll();
-			MarkCollectedTimestampVector(epoch, &curr->vectorTs);
+
+
+			//MarkCollectedTimestampVector(epoch, &curr->vectorTs);
 			curr->Clean();
 
 			// prepare to move the generation in the new list
