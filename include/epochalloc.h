@@ -77,20 +77,34 @@ inline void FreeNode(void *ptr) {
 	nv_dallocx(ptr,0);
 }
 
+inline int DSNodeMemoryIsFree(void *ptr, uint64_t all_size) {
+  uint64_t sa = nv_sallocx(ptr, 0);
+  if ((sa != all_size) && (sa!=0)) {
+	  fprintf(stderr,"Non-standard allocation size: %u\n", sa);
+  }
+  if ((sa!=0)){
+    if (sa <= all_size) {
+      return 0;
+      //if reported allocation size larger than all_size, it means we probably hit an internal large
+      //chunk allocation for which the initial address was not assigned to a
+      //data structure node
+    }
+  }
+  return 1;
+}
+
 inline int NodeMemoryIsFree(void *ptr) {
-    //TODO: check that this function actually performs as intended
-    //size_t all = nv_sallocx(ptr,0);
-    //if (all!=0) assert(all==64);
-	if (nv_malloc_usable_size(ptr) != 0) {
-        //assert(all!=0);
-		return 0;
-	}
-    //assert(all==0);
-	return 1;
+  uint64_t sa = nv_sallocx(ptr, 0);
+  if ((sa!=0)){
+    return 0;
+  }
+  return 1;
 }
 
 inline void FlushThread() {
     nv_mallctl("thread.tcache.flush", NULL, NULL, NULL, 0);
+    bool en = false;
+    nv_mallctl("thread.tcache.enable", NULL, NULL, &en, sizeof(en));
 }
 
 inline void MarkNodeMemoryAsFree(void * ptr) {
